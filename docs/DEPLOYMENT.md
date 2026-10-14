@@ -13,7 +13,7 @@
 | Runtime Node.js | `v24.19.0` (Node 24 LTS) | Fakta |
 | DNS `uninus.ac.id` | Dikelola pemilik proyek | Fakta |
 | `wisuda.uninus.ac.id` saat ini | Di server lain (situs ke-69) | Fakta |
-| Repository | `github.com/aqmalazza/WISUDA_UNINUS_2026` (private) | Fakta |
+| Repository | `github.com/blessprometheus/WISUDA_UNINUS` (private; dipindah dari repo `aqmalazza/WISUDA_UNINUS_2026` pada 14 Okt 2026, repo lama jadi arsip, remote lokal `friend`) | Fakta |
 | Reverse proxy | Kemungkinan Nginx bawaan aaPanel | Asumsi — dicek di §2.A |
 | Versi Node target | `24.x`, dikunci via `engines` di `package.json` | Keputusan |
 
@@ -51,7 +51,7 @@ cat ~/.ssh/wisuda_deploy.pub        # hanya kunci PUBLIK ini yang boleh disalin
 ```
 
 1. Di GitHub: repo → *Settings → Deploy keys → Add deploy key* → tempel kunci publik, **jangan centang "Allow write access"**.
-   (Butuh hak admin repo — pemilik akun `aqmalazza`.)
+   (Butuh hak admin repo — pemilik akun `blessprometheus`.)
 2. Tambahkan ke `~/.ssh/config`:
    ```
    Host github-wisuda
@@ -110,7 +110,7 @@ Node dipasang di folder pribadi `wisuda` dari tarball resmi nodejs.org dengan ve
 
 ```bash
 cd /www/wwwroot/wisuda                           # folder sudah ada, dimiliki akun wisuda
-git clone git@github-wisuda:aqmalazza/WISUDA_UNINUS_2026.git .   # titik = isi folder ini
+git clone git@github-wisuda:blessprometheus/WISUDA_UNINUS.git .   # titik = isi folder ini
 git checkout <TAG_ATAU_BRANCH>                   # staging: boleh feat/r1-nextjs; produksi: hanya tag dari main
 npm ci
 npm run build                                    # harus selesai tanpa error
