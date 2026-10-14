@@ -1,6 +1,10 @@
 # Implementation Plan
 
-> **Fase saat ini: Phase 0 — Discovery & Grilling.** Terakhir diperbarui: 14 Oktober 2026.
+> **Fase saat ini: Phase 3 — Project Setup (R1)**, dimulai 14 Oktober 2026 atas persetujuan pemilik proyek; Phase 0 ditutup. Gate visual final (Phase 2) tetap berlaku sebelum staging.
+>
+> **Versi terkunci saat setup (diverifikasi dari registry npm 14 Okt 2026):** Next.js 16.4.0, React 19.3.0, Tailwind CSS 4, TypeScript 5 (bawaan scaffold; TypeScript 7.0.2 sudah rilis tetapi belum dievaluasi), ESLint 9, Node `>=24 <25`. `npm audit --omit=dev`: 0 kerentanan; 5 kerentanan *high* hanya di rantai alat lint (`eslint-config-next → fast-glob → braces`), tidak ikut ke produksi; `npm audit fix --force` **tidak** dipakai karena menurunkan versi.
+>
+> **Catatan:** redirect `/galeri69.html` memakai status **308** (setara 301 untuk SEO, diatur Next.js `permanent: true`).
 
 ## Log keputusan
 

@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-forest-950: #041a11;
+  --color-forest-900: #062a1c;
+  --color-forest-800: #0e3324;
+  --color-forest-700: #14452f;
+  --color-forest-line: #2e5e49;
+  --color-brand-green: #008f4f;
+  --color-brand-green-deep: #0a5c3a;
+  --color-gold: #ffcc29;
+  --color-gold-soft: #ffe08a;
+  --color-mist: #d3e3da;
+  --color-mist-dim: #b9ccc2;
+  --color-ink-muted: #4a5a52;
+  --font-sans: var(--font-plus-jakarta), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-forest-900);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 3px;
+}
