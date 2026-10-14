@@ -16,7 +16,7 @@ Hasil peninjauan read-only repo PKKMB (14 Oktober 2026), yang **baru terverifika
 - Tes integrasi untuk staff, presensi daring, dan hak akses. `.env.local` tidak ikut commit.
 - Pemilik proyek menyatakan berwenang atas kode tersebut.
 
-**Belum diverifikasi:** isi `auth.ts`, `routes/staff.ts`, `routes/online.ts`, mekanisme login panitia, ada tidaknya 2FA, dan dokumen `DEPLOYMENT.md`/`PROJECT_GUIDE.md`.
+**Audit tahap 1 selesai (14 Okt 2026):** lihat [AUDIT_PKKMB_BACKEND.md](../AUDIT_PKKMB_BACKEND.md). Kesimpulan: layak diadaptasi, tanpa temuan penghalang; tidak ada 2FA; impor hanya CSV; sisa `staff.ts`, migrasi 002–006, tes, dan `npm audit` masuk tahap 2.
 
 ## Keputusan
 
