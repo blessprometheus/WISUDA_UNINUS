@@ -15,6 +15,8 @@
 | D7 | 14 Okt 2026 | **Revisi D1**: modul kehadiran QR (import data, cari NIM + unduh QR, sesi gladi & hari-H, scan, rekap) masuk R2; CMS konten dihapus; absensi manual sebagai cadangan | [ADR-0003](adr/0003-revisi-ruang-lingkup-modul-kehadiran.md) |
 | D8 | 14 Okt 2026 | Pengambilan QR cukup dengan NIM, dengan mitigasi wajib — risiko diterima pemilik proyek | [ADR-0004](adr/0004-pencarian-qr-cukup-dengan-nim.md) |
 | D9 | 14 Okt 2026 | Pemindaian: 4 scanner USB di 4 laptop petugas, halaman web online, tanpa PWA/offline; token QR acak pendek (lookup DB). Lokasi belum ditentukan. | [ADR-0005](adr/0005-pemindai-usb-di-laptop-online.md) |
+| D22 | 14 Okt 2026 | R1 memuat bagian **"Arsip Wisuda ke-69" berisi tiga tautan** (galeri, e-book, survei) ke tujuan yang sama dengan situs lama; redirect 301 `/galeri69.html` → `/arsip/69`. Tidak ada domain/tautan eksternal lain yang bergantung pada URL ke-69. Backup situs lama **belum diunduh** (syarat sebelum DNS dipindah) | [ADR-0002](adr/0002-pemindahan-domain-tanpa-menghapus-server-lama.md) |
+| D21 | 14 Okt 2026 | Arah visual R1 = **arah 3 "Monumen"**; foto belum ada → hero **tanpa foto** (latar hijau gelap + garis lengkung kubah emas + tipografi besar), slot foto disiapkan agar foto dapat ditambahkan tanpa mengubah tata letak. Penyesuaian detail menunggu pemilik proyek melihat versi revisi ("kita lihat dulu"); persetujuan final identitas visual = gate Sen 19 Okt | [PRD §8](PRD.md) |
 | D20 | 14 Okt 2026 | Impor data wisudawan = **CSV UTF-8 saja** + templat (tanpa pembaca `.xlsx`); `TANGGAL LULUS` disimpan sebagai **teks informatif** (tidak dipakai untuk logika/filter); `faculty` dan `degree_level` tidak wajib | [AUDIT](AUDIT_PKKMB_BACKEND.md), [ADR-0009](adr/0009-adaptasi-backend-pkkmb.md) |
 | D19 | 14 Okt 2026 | 2FA (TOTP) **wajib untuk superadmin** + kode pemulihan; 2FA untuk koordinator/ketua tetap *Pending*; petugas tanpa 2FA | [ADR-0008](adr/0008-akun-peran-dan-autentikasi.md) |
 | D18 | 14 Okt 2026 | **Mengubah sebagian D11**: backend kehadiran diadaptasi dari backend PKKMB (Fastify + PostgreSQL) setelah **audit**; frontend tetap Next.js; repo PKKMB asli tidak diubah. Skala PKKMB (± 1.300 mhs, 4 bangku scan, lancar) setara Wisuda ke-70 (± 1.500–1.600 sementara, 4 scanner) | [ADR-0009](adr/0009-adaptasi-backend-pkkmb.md) |
@@ -85,7 +87,7 @@ Acuan: hari-H Sabtu 5 Des 2026; gladi ± Rabu 2 Des 2026 (perkiraan dari "± 3 h
 - [ ] Tanggal pasti launching R1 dari rektorat
 - [ ] 5–15 foto resolusi asli (kampus, wisuda sebelumnya) + logo vektor bila ada
 - [x] Versi Node.js di aaPanel — `v24.19.0`
-- [ ] Backup lengkap file situs ke-69
+- [ ] Backup lengkap file situs ke-69 (belum diunduh per 14 Okt) — simpan di luar repo; dibutuhkan untuk daftar tautan resmi (URL Google Drive galeri, e-book Wasabi)
 - [ ] Subdomain staging
 - [ ] Konfirmasi akses write ke repo GitHub
 - [ ] (Opsional) Clone repo PKKMB ke folder terpisah untuk analisis read-only
