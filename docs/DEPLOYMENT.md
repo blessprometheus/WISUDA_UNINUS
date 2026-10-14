@@ -17,8 +17,10 @@
 | Reverse proxy | Kemungkinan Nginx bawaan aaPanel | Asumsi — dicek di §2.A |
 | Versi Node target | `24.x`, dikunci via `engines` di `package.json` | Keputusan |
 
-**Prinsip:** Claude/agent **tidak** memegang akses server atau kredensial. Semua langkah di bawah dijalankan pemilik proyek.
-Bila perlu bantuan, tempel **output perintah** (bukan password, bukan kunci privat, bukan URL panel).
+**Prinsip (ADR-0010, merevisi D4):** langkah di bawah dapat dijalankan **pemilik proyek** atau **Claude lewat alias SSH
+yang disiapkan pemilik proyek** (mis. `ssh wisuda-staging`). Claude tidak pernah menerima kunci privat, password,
+atau URL panel. Staging: Claude boleh menjalankan mandiri; **produksi: butuh "go" eksplisit** untuk tag/commit tertentu.
+DNS, SSL domain produksi, firewall, dan pengaturan aaPanel tetap dikerjakan pemilik proyek.
 
 ## 2. Runbook R1 — Keputusan D4: manual oleh pemilik proyek
 

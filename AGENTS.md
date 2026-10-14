@@ -46,7 +46,7 @@ Dokumen lain (`ARCHITECTURE`, `TECH_STACK`, `DATABASE_DESIGN`, `API_SPEC`, `DESI
 - Setelah implementasi, jalankan pemeriksaan yang relevan (typecheck, lint, test, build) dan laporkan hasilnya **apa adanya**.
 - Jangan mengklaim kode sudah diuji jika pengujian belum dijalankan.
 - Perbarui dokumentasi saat ada perubahan arsitektur atau keputusan penting. Di dokumen, pisahkan **fakta**, **asumsi**, **usulan**, dan **keputusan final**.
-- **Jangan deploy ke production tanpa persetujuan eksplisit pemilik proyek.**
+- **Jangan deploy ke production tanpa persetujuan eksplisit pemilik proyek.** Deploy staging boleh dijalankan agent lewat alias SSH milik pemilik proyek sesuai [ADR-0010](docs/adr/0010-deploy-oleh-claude-dengan-batasan.md).
 
 ## Batasan Proyek
 

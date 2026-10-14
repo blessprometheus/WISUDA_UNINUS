@@ -29,5 +29,10 @@ Setiap keputusan yang disepakati langsung dicatat ke dokumen terkait (PRD, ADR, 
 
 ## Server & keamanan
 
-- Claude tidak membutuhkan dan tidak boleh meminta akses login ke aaPanel/SSH. Deploy dijalankan pemilik proyek mengikuti `docs/DEPLOYMENT.md`.
+Berlaku [ADR-0010](docs/adr/0010-deploy-oleh-claude-dengan-batasan.md) (merevisi D4):
+
+- Claude boleh menjalankan runbook `docs/DEPLOYMENT.md` lewat **alias SSH yang sudah disiapkan pemilik proyek**. Jangan meminta, menerima, atau menyimpan kunci privat, password, atau URL panel.
+- Staging: jalankan mandiri dan laporkan. **Produksi: tunggu "go" eksplisit** untuk tag/commit tertentu.
+- Tidak boleh di server: menyentuh proyek lain (mis. PKKMB), menghapus di luar folder aplikasi, `curl | sh`, mengubah DNS/SSL produksi/firewall/pengaturan aaPanel. Itu tugas pemilik proyek.
+- Catat setiap perintah pengubah di `~/deploy-wisuda.log` dan laporkan hasilnya apa adanya.
 - Jangan membuka, menyimpan, atau mengutip URL panel yang berisi jalur rahasia/token.
