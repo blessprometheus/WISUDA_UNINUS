@@ -64,23 +64,60 @@ cat ~/.ssh/wisuda_deploy.pub        # hanya kunci PUBLIK ini yang boleh disalin
 
 **Kunci privat (`wisuda_deploy`) tidak pernah dibagikan ke siapa pun, termasuk Claude.**
 
-### C. Instalasi pertama
+### C0. Layanan systemd (sekali, oleh pemilik proyek sebagai root) — Keputusan #35: opsi A
+
+Aplikasi berjalan sebagai layanan `wisuda-r1` milik akun `wisuda`, hidup otomatis saat boot dan restart otomatis bila crash.
+Akun `wisuda` **tidak punya sudo**; aturan sempit di bawah hanya mengizinkan me-restart layanan ini.
 
 ```bash
-cd /www/wwwroot                                  # ⚠ sesuaikan dengan pola direktori aaPanel Anda
-git clone git@github-wisuda:aqmalazza/WISUDA_UNINUS_2026.git wisuda
-cd wisuda
+cat > /etc/systemd/system/wisuda-r1.service <<'EOF'
+[Unit]
+Description=Wisuda UNINUS R1 (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=wisuda
+Group=wisuda
+WorkingDirectory=/www/wwwroot/wisuda
+Environment=NODE_ENV=production
+ExecStart=/home/wisuda/node/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > /etc/sudoers.d/wisuda-r1 <<'EOF'
+wisuda ALL=(root) NOPASSWD: /usr/bin/systemctl restart wisuda-r1, /usr/bin/systemctl status wisuda-r1, /usr/bin/systemctl is-active wisuda-r1
+EOF
+chmod 440 /etc/sudoers.d/wisuda-r1
+visudo -cf /etc/sudoers.d/wisuda-r1        # harus: "parsed OK"
+systemctl daemon-reload
+systemctl enable wisuda-r1                 # JANGAN start dulu: aplikasi belum dibangun
+```
+
+Lihat log: `journalctl -u wisuda-r1 -n 50 --no-pager` (root) atau `sudo systemctl status wisuda-r1` (akun `wisuda`).
+
+### C. Instalasi pertama (dijalankan sebagai akun `wisuda`)
+
+Node dipasang di folder pribadi `wisuda` dari tarball resmi nodejs.org dengan verifikasi checksum (tanpa `curl | sh`, tanpa root):
+`/home/wisuda/node/bin/node` (versi `v24.19.0`). Tambahkan `export PATH=/home/wisuda/node/bin:$PATH` di `~/.profile`.
+
+```bash
+cd /www/wwwroot/wisuda                           # folder sudah ada, dimiliki akun wisuda
+git clone git@github-wisuda:aqmalazza/WISUDA_UNINUS_2026.git .   # titik = isi folder ini
 git checkout <TAG_ATAU_BRANCH>                   # staging: boleh feat/r1-nextjs; produksi: hanya tag dari main
 npm ci
 npm run build                                    # harus selesai tanpa error
+sudo systemctl restart wisuda-r1                 # satu-satunya sudo yang diizinkan
 ```
 
-Jalankan sebagai proses terkelola dan **hanya mendengarkan di localhost** (jangan membuka port 3000 ke publik di firewall):
-
-- ⚠ **Opsi 1 — Node project aaPanel:** *Website → Node project → Add*; direktori = folder `wisuda`; perintah start
-  `npx next start -H 127.0.0.1 -p 3000`; pilih Node 24. Nama menu dapat berbeda.
-- **Opsi 2 — PM2** (bila terpasang): `pm2 start "npx next start -H 127.0.0.1 -p 3000" --name wisuda-r1 && pm2 save`.
-
+Layanan hanya mendengarkan di `127.0.0.1:3000` (jangan membuka port 3000 ke publik di firewall).
 Cek lokal di server: `curl -sI http://127.0.0.1:3000/ | head -3` → harus `HTTP/1.1 200 OK`.
 
 ### D. Reverse proxy & HTTPS
@@ -126,7 +163,7 @@ git fetch --tags
 git checkout <TAG_BARU>
 rm -rf .next.prev && cp -r .next .next.prev       # cadangan build lama
 npm ci && npm run build                           # BERHENTI jika gagal: lihat Rollback
-# restart proses (Node project aaPanel ⚠ / pm2 restart wisuda-r1), lalu jalankan §E
+sudo systemctl restart wisuda-r1               # lalu jalankan §E
 ```
 
 Ada jeda beberapa detik saat restart; dapat diterima untuk R1.
@@ -138,7 +175,7 @@ cd /www/wwwroot/wisuda
 git checkout <PREV>                               # hash dari ~/deploy-wisuda.log
 rm -rf .next && mv .next.prev .next               # bila build baru gagal / rusak
 npm ci                                            # samakan dependensi dengan versi lama
-# restart proses, lalu jalankan §E
+sudo systemctl restart wisuda-r1               # lalu jalankan §E
 ```
 
 Bila `.next.prev` tidak ada, ganti dengan `npm run build` pada commit lama.
