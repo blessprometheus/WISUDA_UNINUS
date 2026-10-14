@@ -59,7 +59,7 @@ export function Hero() {
           className="flex flex-col font-extrabold leading-[0.88] tracking-[-0.04em]"
         >
           <span className="text-[clamp(40px,6vw,80px)]">Wisuda</span>
-          <span className="text-[clamp(120px,22vw,300px)]">
+          <span className="whitespace-nowrap text-[clamp(80px,22vw,300px)]">
             ke-<span className="text-gold">70</span>
           </span>
         </h1>

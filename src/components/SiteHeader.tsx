@@ -8,7 +8,7 @@ export function SiteHeader() {
       <Link
         href="/"
         className="flex items-center gap-3 text-white no-underline"
-        aria-label={`${siteConfig.shortName} — beranda`}
+        aria-label={`UNINUS, beranda ${siteConfig.shortName}`}
       >
         <Image
           src="/brand/logo-uninus.png"

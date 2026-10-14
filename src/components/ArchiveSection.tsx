@@ -9,7 +9,7 @@ export function ArchiveSection() {
     >
       <div
         aria-hidden="true"
-        className="flex min-h-[480px] flex-[1_1_420px] items-center justify-center bg-forest-800 p-12"
+        className="flex min-h-[240px] sm:min-h-[480px] flex-[1_1_420px] items-center justify-center bg-forest-800 p-12"
       >
         <span className="text-[clamp(160px,24vw,320px)] font-extrabold leading-[0.8] tracking-[-0.06em] text-gold opacity-90">
           69
