@@ -55,7 +55,7 @@ D1 semula: Opsi A (portal informasi + CMS, tanpa data pribadi). **Setelah D7:** 
 | Arsip wisuda sebelumnya | **MVP** | Dimulai dari ke-69 (lihat ADR-0002) |
 | Dashboard admin (import data, sesi, rekap) | **MVP** | R2 (D7) |
 | Content management (CMS konten) | **Out of scope** | Dihapus oleh D7; konten jarang berubah, disimpan di kode |
-| Import data wisudawan dari Excel | **MVP** | R2; wajib validasi & laporan duplikat NIM; **idempoten** (upsert per NIM, token QR tidak berubah saat impor ulang); pratinjau sebelum disimpan |
+| Import data wisudawan dari CSV UTF-8 (ekspor dari Excel, D20) | **MVP** | R2; wajib validasi & laporan duplikat NIM; **idempoten** (upsert per NIM, token QR tidak berubah saat impor ulang); pratinjau sebelum disimpan |
 | Tambah / ubah / nonaktifkan wisudawan satu per satu (superadmin) | **MVP** | Data berubah hingga ± 3 hari sebelum gladi (D16); semua perubahan masuk log audit |
 | Pencarian NIM di halaman utama + unduh QR | **MVP** | R2; ADR-0004 |
 | Pengelolaan sesi kehadiran (gladi, hari-H) | **MVP** | R2 |

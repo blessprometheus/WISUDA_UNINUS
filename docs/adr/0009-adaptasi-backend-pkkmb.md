@@ -24,7 +24,7 @@ Hasil peninjauan read-only repo PKKMB (14 Oktober 2026), yang **baru terverifika
 2. **Frontend tetap Next.js** (R1 dan R2) dan memanggil API Fastify. Alur deploy: dua proses di aaPanel, detail di DEPLOYMENT.md.
 3. **Audit wajib sebelum adaptasi**: `auth.ts`, `staff.ts`, `online.ts`, konfigurasi, dan dependensi — fokus autentikasi, sesi, otorisasi per peran, validasi input, rate limiting, upload, dan celah umum. Hasil audit dilaporkan ke pemilik proyek sebelum kode dipakai.
 4. **Dibuang**: presensi daring + bukti foto, nametag PDF, galeri/materi/video Google Drive, `sharp`/`pdf-lib` bila tak terpakai.
-5. **Disesuaikan**: skema tanpa `faculty` wajib (data BAAK tidak memilikinya); sesi gladi/hari-H; impor dari Excel (`.xlsx`) dengan pratinjau, validasi, dan laporan NIM ganda; peran `superadmin`/`petugas` (+ `koordinator`/`ketua` untuk timeline, ADR-0008); entri "tidak terdaftar" (D17); log audit; fitur retensi (ADR-0007).
+5. **Disesuaikan**: skema tanpa `faculty` wajib (data BAAK tidak memilikinya); sesi gladi/hari-H; impor **CSV UTF-8** (D20; admin mengekspor dari Excel, tersedia templat; **tanpa pembaca `.xlsx`** untuk menghindari dependensi baru) dengan pratinjau, validasi, dan laporan NIM ganda; `TANGGAL LULUS` disimpan sebagai teks informatif; peran `superadmin`/`petugas` (+ `koordinator`/`ketua` untuk timeline, ADR-0008); entri "tidak terdaftar" (D17); log audit; fitur retensi (ADR-0007).
 6. **Tes** ikut diadaptasi dan ditambah; tes integrasi tidak boleh menyentuh database produksi atau data asli.
 7. Semua rahasia hanya di environment server. Tidak ada data mahasiswa asli di repo atau tes.
 
