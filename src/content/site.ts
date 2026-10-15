@@ -65,6 +65,12 @@ export const officialLinks = [
  */
 export const qrEnabled = process.env.NEXT_PUBLIC_QR_ENABLED === "1";
 
+/**
+ * Saklar area staf (/masuk, /pemindai). Dibaca saat BUILD; default mati → rute-rute ini 404 dan R1 tidak berubah.
+ * Dipisah dari saklar QR karena petugas perlu dicoba lebih awal daripada wisudawan.
+ */
+export const staffEnabled = process.env.NEXT_PUBLIC_STAFF_ENABLED === "1";
+
 export const navLinks = [
   { label: "Informasi", href: "/#informasi" },
   ...(qrEnabled ? [{ label: "Kartu QR", href: "/#kartu-qr" }] : []),

@@ -203,6 +203,9 @@ layanan tidak berpengaruh; harus build ulang. Tanpa `NEXT_PUBLIC_QR_ENABLED=1` h
 (terverifikasi: 0 kemunculan di HTML). Hanya nyalakan setelah API, database, dan data wisudawan siap (QR dibuka ± 28 Nov 2026).
 Bila Nginx meneruskan `/api/*` ke API langsung, `rewrites` Next.js tidak terpakai (aman dibiarkan).
 
+Saklar lain: `NEXT_PUBLIC_STAFF_ENABLED=1` membuka halaman `/masuk` dan `/pemindai` (default mati → keduanya 404; terverifikasi).
+Saklar staf dan saklar QR terpisah karena petugas perlu dicoba lebih awal daripada wisudawan.
+
 ### H. Yang tidak boleh
 
 - Menaruh `.env`, kunci privat, atau token di repo, di chat, atau di dokumen.
