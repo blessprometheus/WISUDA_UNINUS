@@ -21,6 +21,87 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Odometer angka 70: puluhan 0→7, satuan 0→9→0. Tinggi tiap angka = 1em. */
+.odo {
+  display: inline-flex;
+  vertical-align: top;
+  /* Sejajarkan garis dasar angka dengan huruf "ke-" (hasil ukur: ±0,065em lebih rendah). */
+  position: relative;
+  top: -0.065em;
+  font-variant-numeric: tabular-nums;
+}
+.odo-col {
+  display: block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+  /* Tepi jendela memudar saat roda berputar; angka diam berada di luar zona pudar. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 9%,
+    #000 91%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, transparent 0, #000 9%, #000 91%, transparent 100%);
+}
+.odo-strip {
+  display: flex;
+  flex-direction: column;
+}
+.odo-strip > span {
+  display: block;
+  height: 1em;
+  line-height: 1;
+}
+.odo-tens {
+  animation: odo-tens 1.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+.odo-ones {
+  animation: odo-ones 2s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+@keyframes odo-tens {
+  to {
+    transform: translateY(-7em);
+  }
+}
+@keyframes odo-ones {
+  to {
+    transform: translateY(-10em);
+  }
+}
+
+/* Kilau emas satu kali pada angka 70 setelah berhenti berputar (warna tetap emas solid). */
+.gold-shine {
+  color: #ffcc29;
+  animation: shine 1.6s ease-in-out 2.1s both;
+}
+@keyframes shine {
+  0%,
+  100% {
+    filter: none;
+  }
+  45% {
+    filter: brightness(1.3) drop-shadow(0 0 28px rgba(255, 204, 41, 0.6));
+  }
+}
+
+/* Cahaya emas samar di belakang judul, menyala perlahan lalu tenang. */
+.hero-glow {
+  background: radial-gradient(closest-side, rgba(255, 204, 41, 0.2), rgba(255, 204, 41, 0) 70%);
+  animation: glow 3s ease-out 0.5s both;
+}
+@keyframes glow {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -36,4 +117,85 @@ body {
 :focus-visible {
   outline: 3px solid var(--color-gold);
   outline-offset: 3px;
+}
+
+/* ===== Animasi (hero memakai CSS murni: tanpa kedipan, tetap tampil tanpa JavaScript) ===== */
+@keyframes rise {
+  from {
+    transform: translateY(108%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Topeng penggulir teks: padding/margin negatif agar ascender huruf tidak terpotong. */
+.mask {
+  display: block;
+  overflow: hidden;
+  padding: 0.12em 0 0.06em;
+  margin: -0.12em 0 -0.06em;
+}
+
+.rise {
+  display: inline-block;
+  animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+.fade-up {
+  animation: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+.dome-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 2.4s cubic-bezier(0.45, 0.05, 0.2, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Pengguna "kurangi gerakan": jangan sembunyikan konten sama sekali (menimpa gaya sebaris Motion). */
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .rise,
+  .fade-up {
+    animation: none;
+  }
+  .dome-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .odo-tens,
+  .odo-ones,
+  .gold-shine,
+  .hero-glow {
+    animation: none;
+  }
+  .odo-tens {
+    transform: translateY(-7em);
+  }
+  .odo-ones {
+    transform: translateY(-10em);
+  }
 }
