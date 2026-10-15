@@ -36,3 +36,72 @@ body {
   outline: 3px solid var(--color-gold);
   outline-offset: 3px;
 }
+
+/* ===== Animasi (hero memakai CSS murni: tanpa kedipan, tetap tampil tanpa JavaScript) ===== */
+@keyframes rise {
+  from {
+    transform: translateY(108%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Topeng penggulir teks: padding/margin negatif agar ascender huruf tidak terpotong. */
+.mask {
+  display: block;
+  overflow: hidden;
+  padding: 0.12em 0 0.06em;
+  margin: -0.12em 0 -0.06em;
+}
+
+.rise {
+  display: inline-block;
+  animation: rise 1.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+.fade-up {
+  animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+.dome-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 2.8s cubic-bezier(0.45, 0.05, 0.2, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Pengguna "kurangi gerakan": jangan sembunyikan konten sama sekali (menimpa gaya sebaris Motion). */
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .rise,
+  .fade-up {
+    animation: none;
+  }
+  .dome-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
