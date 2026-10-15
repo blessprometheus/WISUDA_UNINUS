@@ -22,7 +22,23 @@ yang disiapkan pemilik proyek** (mis. `ssh wisuda-staging`). Claude tidak pernah
 atau URL panel. Staging: Claude boleh menjalankan mandiri; **produksi: butuh "go" eksplisit** untuk tag/commit tertentu.
 DNS, SSL domain produksi, firewall, dan pengaturan aaPanel tetap dikerjakan pemilik proyek.
 
-## 2. Runbook R1 — Keputusan D4: manual oleh pemilik proyek
+## Status staging (15 Okt 2026)
+
+| Langkah | Status |
+|---|---|
+| Akun `wisuda` (non-root, tanpa sudo) + alias SSH `wisuda-staging` | Selesai, terverifikasi |
+| Node `v24.19.0` di `/home/wisuda/node` (checksum SHA-256 cocok) | Selesai |
+| Deploy key hanya-baca ke `blessprometheus/WISUDA_UNINUS` | Selesai, terverifikasi |
+| Layanan `wisuda-r1` (systemd) + sudoers sempit (skrip C0, dijalankan root) | Selesai, terverifikasi (`enabled`; sudo penuh ditolak) |
+| Clone, `npm ci`, `npm run build` (commit `95d295a`, branch `feat/r1-nextjs`) | Selesai |
+| Layanan berjalan di `127.0.0.1:3000`; `/`, `/arsip/69`, redirect `/galeri69.html` (308) | Terverifikasi lokal di server |
+| Subdomain staging (DNS) → server, Nginx reverse proxy, SSL | **Menunggu pemilik proyek** (§2.D) |
+
+Catatan dari uji pertama: skrip C0 dikirim sebagai berkas `/home/wisuda/c0-install.sh` agar root cukup menjalankan satu perintah
+(menempel blok panjang ke terminal web terbukti rawan gagal). Perintah `ps -C node` tidak menampilkan proses layanan; periksa
+dengan `sudo systemctl status wisuda-r1`.
+
+## 2. Runbook R1 — D4 direvisi oleh [ADR-0010](adr/0010-deploy-oleh-claude-dengan-batasan.md)
 
 ### A. Pengecekan awal (sekali, via SSH) — tempel hasilnya ke Claude
 
