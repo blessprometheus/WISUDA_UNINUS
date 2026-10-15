@@ -76,7 +76,8 @@ function isLocked(user: UserRow): boolean {
 }
 
 function profile(auth: AuthContext) {
-  const setupRequired = auth.user.role === "superadmin" && !auth.user.totpEnabled;
+  const setupRequired =
+    config.require2faForSuperadmin && auth.user.role === "superadmin" && !auth.user.totpEnabled;
   return {
     user: {
       id: auth.user.id,
@@ -168,7 +169,8 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       await pool.query("UPDATE users SET failed_logins = 0, locked_until = NULL WHERE id = $1", [
         user.id,
       ]);
-      const setupRequired = user.role === "superadmin" && !user.totp_enabled;
+      const setupRequired =
+        config.require2faForSuperadmin && user.role === "superadmin" && !user.totp_enabled;
       const mfaVerified = !user.totp_enabled && !setupRequired;
       const minutes = mfaVerified ? sessionLifetimeMinutes(user.role) : PENDING_MINUTES;
       await createSession(user.id, minutes, mfaVerified, reply);

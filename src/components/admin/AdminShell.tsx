@@ -104,6 +104,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <main id="konten" className="min-w-0 flex-1 p-4 sm:p-8">
+        {profile && !profile.mfa.enabled && (
+          <p
+            role="status"
+            className="mb-6 rounded border-l-4 border-[#8a6a00] bg-[#fff8dd] px-4 py-3 text-[14px] font-semibold text-[#5c4700]"
+          >
+            Akun ini belum memakai verifikasi dua langkah. Akun superadmin dapat melihat dan
+            mengekspor data pribadi wisudawan; disarankan mengaktifkannya sebelum data asli diimpor.
+          </p>
+        )}
         {children}
         <div className="mt-10 flex gap-4 text-[14px] lg:hidden">
           <button type="button" onClick={logout} className="min-h-11 font-semibold underline">

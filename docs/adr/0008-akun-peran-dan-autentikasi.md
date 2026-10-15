@@ -19,6 +19,10 @@ Admin saat ini satu orang: **superadmin** (pemilik proyek). Pemilik proyek beren
 6. **Pembaruan (D14):** peran `koordinator` (mengelola timeline divisinya) dan `ketua` (melihat laporan progres) ditambahkan untuk modul timeline. Keduanya **tidak mendapat akses ke data wisudawan maupun rekap kehadiran**. Pemisahan ini wajib ditegakkan **di sisi server** (pemeriksaan peran di setiap endpoint dan query), bukan hanya dengan menyembunyikan menu. Bila kelak perlu akses ke data wisudawan, itu keputusan BAAK (ADR-0007) dan ADR baru.
 7. Login `koordinator` dan `ketua` memakai password; **2FA wajib untuk `ketua` dan `koordinator`** diusulkan karena akunnya berumur panjang (Oktober–Desember) — *Pending* persetujuan.
 
+## Pembaruan (D35, 15 Okt 2026): 2FA superadmin dapat dinonaktifkan
+
+Atas permintaan pemilik proyek, kewajiban 2FA superadmin dapat dimatikan lewat `REQUIRE_SUPERADMIN_2FA=0`. **Default tetap wajib.** Bila dimatikan: superadmin tanpa 2FA langsung masuk; superadmin yang sudah mengaktifkan 2FA tetap diminta kode; dashboard menampilkan peringatan. Pengembang menyarankan tetap wajib di produksi karena akun ini mengakses data pribadi ±1.500 wisudawan (UU PDP); keputusan akhir ada pada pemilik proyek. Dapat dinyalakan kembali kapan saja tanpa perubahan kode.
+
 ## Risiko
 
 | Risiko | Mitigasi |

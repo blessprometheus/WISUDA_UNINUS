@@ -64,6 +64,8 @@ export const config = Object.freeze({
   totpKey: parseEncryptionKey(),
   secureCookies: process.env.NODE_ENV === "production",
   trustProxy: process.env.TRUST_PROXY === "1",
+  /** Superadmin wajib 2FA (default ya). Isi REQUIRE_SUPERADMIN_2FA=0 hanya bila pemilik proyek sengaja menonaktifkannya. */
+  require2faForSuperadmin: process.env.REQUIRE_SUPERADMIN_2FA !== "0",
   /** Batas login per menit per IP. Nilai lain hanya untuk tes. */
   loginRateMax: Number(process.env.LOGIN_RATE_MAX || 5),
 });
