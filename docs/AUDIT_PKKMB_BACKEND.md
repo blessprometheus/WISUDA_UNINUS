@@ -46,6 +46,20 @@
 
 Fondasi **layak diadaptasi**: otentikasi, CSRF, penanganan scan, impor, dan validasi konfigurasi dibuat dengan hati-hati dan konsisten, dan sistemnya sudah terbukti di acara nyata. Yang perlu ditambahkan (2FA, peran baru, penguncian per akun, "tidak terdaftar", retensi, log audit) bersifat penambahan, bukan perbaikan celah besar. **Belum ada temuan yang menghalangi adaptasi**, dengan catatan bagian yang belum dibaca akan diaudit sebelum dipakai.
 
+## Tahap 2 — temuan tambahan (15 Okt 2026, `routes/staff.ts` baris 414–980)
+
+| # | Temuan | Dampak untuk Wisuda |
+|---|---|---|
+| 12 | **Scan dan input manual sama-sama ditolak di luar jendela waktu sesi** (`is_open_now` → `session_closed`) | Jebakan operasional: jika jam sesi salah diatur, cadangan manual pun mati. Jendela waktu gladi/hari-H harus diatur longgar dan dapat diubah superadmin tanpa deploy |
+| 13 | Satu sesi per tanggal (UNIQUE `event_date`), sesi tidak bisa diubah setelah ada kehadiran, aktivasi lewat advisory lock + indeks unik "satu sesi aktif" | Cocok; gladi (± 2 Des) dan hari-H (5 Des) berbeda tanggal |
+| 14 | Impor memakai `ON CONFLICT (nim) DO UPDATE` yang **tidak menyentuh `attendance_token`** | Token QR stabil saat impor ulang (kebutuhan D16 terpenuhi) |
+| 15 | `degree_level`, `faculty`, `attendance_mode`, `online_*`, `presenceModeSql` tersebar di impor, statistik, ekspor | Dibuang/diganti saat adaptasi; ekspor dan statistik dikelompokkan per `study_program` |
+| 16 | Statistik dan ekspor memakai satu query tanpa paginasi untuk ekspor | Dapat diterima untuk ± 1.600 baris |
+| 17 | Tidak ada pencatatan siapa mengubah/menambah peserta selain `import_batches` dan `scan_logs` | Tambah `audit_log` |
+| 18 | Endpoint scan tidak punya rate limit sendiri (hanya login/impor/lookup/unduh) | Dapat diterima karena memerlukan sesi login; dipertimbangkan batas longgar |
+
+**Belum dibaca:** `PUT /admin/students/:id` (baris 1122–1190), `routes/online.ts` (dibuang), migrasi 002–006 (terkait presensi daring), isi tes, `PROJECT_GUIDE.md`.
+
 ## Tahap 2 (sebelum kode dipakai di produksi)
 
 - Baca sisa `routes/staff.ts` dan migrasi 002–006.
