@@ -56,3 +56,21 @@ npm run db:test:stop
 ```
 
 Superadmin wajib mengaktifkan 2FA pada login pertama (aplikasi authenticator di HP).
+
+## Uji lokal lengkap (data rekaan)
+
+Semua berjalan di komputer sendiri, tanpa server aaPanel. Memakai klaster PostgreSQL **terpisah** (port 55433), bukan PostgreSQL lain di komputer.
+
+```bash
+npm run db:local:start     # klaster PostgreSQL terpisah (sekali per sesi komputer)
+# .env.local sudah berisi rahasia acak (diabaikan Git); contoh isi ada di .env.example
+npm run db:migrate         # sekali
+npm run local:seed         # 8 wisudawan REKAAN, sesi aktif hari ini, akun petugas & superadmin demo
+npm run build              # membaca saklar NEXT_PUBLIC_* dari .env.local
+npm run local:start        # API :3001 + situs :3000 (Ctrl+C untuk berhenti)
+```
+
+- Wisudawan: <http://localhost:3000/#kartu-qr> → NIM `20260001`…`20260008` → QR tampil.
+- Petugas: <http://localhost:3000/masuk> → `petugas@demo.local` → `/pemindai` → pilih meja → arahkan scanner ke QR.
+- Superadmin (`super@demo.local`) wajib mendaftarkan 2FA (aplikasi authenticator di HP).
+- `local:seed` menolak berjalan di database yang bukan lokal atau namanya tidak memuat dev/demo/test. Kata sandi demo hanya tampil sekali.

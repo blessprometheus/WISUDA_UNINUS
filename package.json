@@ -17,7 +17,12 @@
     "admin:create": "node --env-file-if-exists=.env.local --import tsx server/scripts/create-user.ts",
     "db:test:start": "node server/scripts/test-db.mjs start",
     "db:test:stop": "node server/scripts/test-db.mjs stop",
-    "test:api": "node --import tsx --test --test-concurrency=1 server/tests/*.test.ts"
+    "test:api": "node --import tsx --test --test-concurrency=1 server/tests/*.test.ts",
+    "local:seed": "node --env-file-if-exists=.env.local --import tsx server/scripts/seed-demo.ts",
+    "local:start": "node scripts/local-start.mjs",
+    "db:local:start": "node server/scripts/test-db.mjs start",
+    "db:local:stop": "node server/scripts/test-db.mjs stop",
+    "build:local": "next build"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.3",
