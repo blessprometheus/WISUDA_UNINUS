@@ -1,6 +1,6 @@
 import { Parallax } from "@/components/motion/Parallax";
 import { SiteHeader } from "@/components/SiteHeader";
-import { siteConfig } from "@/content/site";
+import { qrEnabled, siteConfig } from "@/content/site";
 
 function delay(seconds: number): React.CSSProperties {
   return { "--d": `${seconds}s` } as React.CSSProperties;
@@ -138,12 +138,14 @@ export function Hero() {
             >
               Lihat Informasi
             </a>
-            <a
-              href="/arsip/69"
-              className="inline-flex min-h-[52px] items-center rounded border-2 border-white px-7 text-[15px] font-bold text-white no-underline hover:bg-white/10"
-            >
-              Arsip Wisuda ke-69
-            </a>
+            {qrEnabled && (
+              <a
+                href="#kartu-qr"
+                className="inline-flex min-h-[52px] items-center rounded border-2 border-white px-7 text-[15px] font-bold text-white no-underline hover:bg-white/10"
+              >
+                Cari NIM
+              </a>
+            )}
           </div>
         </div>
       </div>
