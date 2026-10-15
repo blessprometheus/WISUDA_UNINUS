@@ -33,6 +33,16 @@
 | GET | `/auth/me` | semua | Profil sesi |
 | POST | `/auth/logout` | semua | Cabut sesi |
 
+### Aturan pemindaian (D26, diimplementasikan 15 Okt 2026)
+
+- Sesi harus **diaktifkan superadmin** ("membuka gerbang"); selain itu hasil `not_active`.
+- **Scan QR** hanya di dalam jendela waktu sesi; di luar → `outside_window` (tidak dicatat).
+- **Input NIM manual** diterima di luar jendela tetapi `outside_window = true` di rekap.
+- Hasil scan (HTTP 200): `recorded`, `duplicate`, `unknown`, `not_active`, `outside_window`, `inactive_student`; berisi nama dan prodi untuk dikonfirmasi petugas.
+- Scan ganda (termasuk dari 4 titik bersamaan) ditegakkan constraint `UNIQUE(student_id, session_id)`.
+- Impor: kirim isi berkas dengan `Content-Type: text/csv` (header `X-Filename` opsional); `?dry_run=1` untuk pratinjau.
+- Peninjauan entri tidak terdaftar: `POST /admin/unregistered/:id/review`. Anonimisasi butuh `confirm: "ANONIMKAN WISUDA 70"`.
+
 ### Kehadiran
 
 | Metode | Rute | Peran | Fungsi |

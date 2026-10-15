@@ -6,7 +6,10 @@ import Fastify from "fastify";
 import { config } from "./config.js";
 import { pool } from "./db.js";
 import { fail, ok } from "./http.js";
+import { registerAttendanceRoutes } from "./routes/attendance.js";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { registerReportRoutes } from "./routes/reports.js";
+import { registerStudentRoutes } from "./routes/students.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -45,5 +48,8 @@ export async function buildApp() {
   });
 
   await registerAuthRoutes(app);
+  await registerStudentRoutes(app);
+  await registerAttendanceRoutes(app);
+  await registerReportRoutes(app);
   return app;
 }
