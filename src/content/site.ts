@@ -59,8 +59,15 @@ export const officialLinks = [
   { label: "uninus.ac.id", href: "https://uninus.ac.id" },
 ] as const;
 
+/**
+ * Saklar fitur "Cari NIM & unduh QR" (R2). Dibaca saat BUILD; default mati sehingga R1 tidak berubah.
+ * Nyalakan hanya setelah API, database, dan data wisudawan siap (jadwal: QR dibuka ± 28 Nov 2026).
+ */
+export const qrEnabled = process.env.NEXT_PUBLIC_QR_ENABLED === "1";
+
 export const navLinks = [
   { label: "Informasi", href: "/#informasi" },
+  ...(qrEnabled ? [{ label: "Kartu QR", href: "/#kartu-qr" }] : []),
   { label: "Arsip", href: "/arsip/69" },
   { label: "Kontak", href: "#kontak" },
 ] as const;

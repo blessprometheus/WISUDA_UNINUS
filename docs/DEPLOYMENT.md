@@ -196,6 +196,13 @@ sudo systemctl restart wisuda-r1               # lalu jalankan §E
 
 Bila `.next.prev` tidak ada, ganti dengan `npm run build` pada commit lama.
 
+### G2. Variabel BUILD fitur R2 (penting)
+
+`NEXT_PUBLIC_QR_ENABLED` dan `API_INTERNAL_URL` **dibaca saat `npm run build`, bukan saat `next start`**. Mengubahnya di environment
+layanan tidak berpengaruh; harus build ulang. Tanpa `NEXT_PUBLIC_QR_ENABLED=1` halaman R1 tidak memuat fitur Cari NIM sama sekali
+(terverifikasi: 0 kemunculan di HTML). Hanya nyalakan setelah API, database, dan data wisudawan siap (QR dibuka ± 28 Nov 2026).
+Bila Nginx meneruskan `/api/*` ke API langsung, `rewrites` Next.js tidak terpakai (aman dibiarkan).
+
 ### H. Yang tidak boleh
 
 - Menaruh `.env`, kunci privat, atau token di repo, di chat, atau di dokumen.
