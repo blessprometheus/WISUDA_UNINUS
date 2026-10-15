@@ -35,3 +35,24 @@ jadi mesin build membutuhkan akses internet.
 ## Keamanan
 
 Jangan commit `.env*` (kecuali `.env.example`), kredensial, URL panel server, atau data wisudawan.
+
+## Backend (API) — R2
+
+Fastify + PostgreSQL di `server/` (ADR-0009). Satu `package.json`; `server/package.json` hanya menandai modul ES.
+
+```bash
+cp .env.example .env.local      # isi rahasia acak; jangan commit
+npm run db:migrate              # terapkan server/sql/*.sql
+npm run admin:create -- --email nama@contoh.id --name "Nama" --role superadmin
+npm run api:dev                 # API di http://127.0.0.1:3001
+```
+
+Tes memakai klaster PostgreSQL **sementara dan terpisah** (port 55433), tidak menyentuh PostgreSQL lain:
+
+```bash
+npm run db:test:start           # sekali; butuh PostgreSQL 17 (PG_BIN untuk lokasi lain)
+npm run test:api
+npm run db:test:stop
+```
+
+Superadmin wajib mengaktifkan 2FA pada login pertama (aplikasi authenticator di HP).

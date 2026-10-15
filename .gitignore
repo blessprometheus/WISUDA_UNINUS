@@ -45,3 +45,7 @@ next-env.d.ts
 
 # Tooling lokal agent (bukan bagian aplikasi)
 /.opencode/
+
+# Klaster PostgreSQL sementara untuk tes
+/.tmp/
+/server/dist/

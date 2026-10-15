@@ -54,8 +54,9 @@
 
 Perintah/halaman superadmin yang menjalankan, **setelah BAAK menetapkan periode**: untuk satu `ceremony_id`, kosongkan `name`/`nim`/`study_program` di `students` dan `typed_*` di `unregistered_entries` (`anonymized_at` terisi), pertahankan jumlah agregat. Dicatat di `audit_log`.
 
-## Pertanyaan terbuka
+## Keputusan (D26, 15 Okt 2026)
 
-- Apakah tabel `ceremonies` disetujui, atau cukup kolom `ceremony_number` di setiap tabel?
-- Aturan jendela waktu sesi: scan **dan** input manual ditolak di luar jendela (perilaku PKKMB) atau input manual boleh di luar jendela?
-- Panjang masa sesi login petugas dan koordinator/ketua.
+- Tabel **`ceremonies` disetujui**.
+- **Jendela waktu sesi:** scan QR mengikuti jendela; **input manual boleh di luar jendela tetapi ditandai** `attendances.outside_window = TRUE` dan terlihat di rekap.
+- **Masa sesi login:** petugas 12 jam, superadmin 8 jam, koordinator/ketua 7 hari.
+- Tambahan teknis: `users.totp_last_step` (cegah pemakaian ulang kode TOTP), `user_sessions.mfa_verified` (sesi belum lolos 2FA tidak dapat mengakses fitur apa pun). Superadmin **wajib** 2FA; peran lain opsional (ADR-0008).
