@@ -81,7 +81,7 @@
 
 Akses darurat superadmin yang kehilangan HP dan kode pemulihan: `npm run admin:reset-2fa -- --email ...` (dijalankan di server oleh pemilik proyek).
 
-### Timeline (R2a)
+### Timeline (diimplementasikan 15 Okt 2026)
 
 | Metode | Rute | Peran | Fungsi |
 |---|---|---|---|
@@ -96,3 +96,17 @@ Akses darurat superadmin yang kehilangan HP dan kode pemulihan: `npm run admin:r
 ## Tes wajib sebelum staging
 
 Otorisasi per peran (matriks di atas), CSRF, rate limit, pencegahan scan ganda paralel, impor idempoten (token stabil), impor NIM ganda, penguncian akun, 2FA, ekspor anti formula injection.
+
+
+### Timeline — rute yang berlaku
+
+| Metode | Rute | Peran |
+|---|---|---|
+| GET | `/timeline/divisions` | S, T (semua divisi); K (divisinya) |
+| GET | `/timeline/tasks?division_id` , `/timeline/tasks/:id/notes` | S, T; K (divisinya) |
+| POST / PUT | `/timeline/tasks` , `/timeline/tasks/:id` , `POST /timeline/tasks/:id/notes` | S; K (divisinya). **T tidak boleh menulis** |
+| POST | `/timeline/tasks/:id/delete` | S |
+| GET | `/timeline/report` | S, T |
+| GET / POST | `/admin/divisions` , `/admin/divisions/:id/members` , `.../members/:userId/remove` | S (hanya pengguna berperan koordinator yang dapat ditugaskan; satu divisi boleh beberapa koordinator) |
+
+Koordinator yang mengakses divisi lain mendapat 403. Pemisahan ini diuji otomatis (termasuk perusakan sengaja pada pengaman isolasi dan peran ketua).

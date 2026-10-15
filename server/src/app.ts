@@ -10,6 +10,7 @@ import { registerAttendanceRoutes } from "./routes/attendance.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerReportRoutes } from "./routes/reports.js";
 import { registerStudentRoutes } from "./routes/students.js";
+import { registerTimelineRoutes } from "./routes/timeline.js";
 import { registerUserRoutes } from "./routes/users.js";
 
 export async function buildApp() {
@@ -53,5 +54,6 @@ export async function buildApp() {
   await registerAttendanceRoutes(app);
   await registerReportRoutes(app);
   await registerUserRoutes(app);
+  await registerTimelineRoutes(app);
   return app;
 }

@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/impor", label: "Impor Data" },
   { href: "/admin/kehadiran", label: "Kehadiran" },
   { href: "/admin/pengguna", label: "Pengguna" },
+  { href: "/admin/divisi", label: "Divisi & Timeline" },
   { href: "/admin/audit", label: "Audit & Retensi" },
 ] as const;
 

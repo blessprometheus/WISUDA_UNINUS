@@ -88,7 +88,7 @@ export function LoginFlow() {
 
   function finish(userRole: Profile["user"]["role"]) {
     const fallback =
-      userRole === "superadmin" ? "/admin" : userRole === "petugas" ? "/pemindai" : "/";
+      userRole === "superadmin" ? "/admin" : userRole === "petugas" ? "/pemindai" : "/timeline";
     // Navigasi penuh (bukan router.replace): Next.js mempertahankan state halaman sebelumnya, sehingga kode pemulihan
     // atau data login bisa tersisa di memori klien. Muat ulang membuang seluruh state.
     window.location.assign(safeNext(params.get("next"), fallback));

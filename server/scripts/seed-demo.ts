@@ -69,6 +69,8 @@ async function main(): Promise<void> {
   for (const [email, name, role] of [
     ["petugas@demo.local", "Petugas Demo", "petugas"],
     ["super@demo.local", "Superadmin Demo", "superadmin"],
+    ["koordinator@demo.local", "Koordinator Demo (Acara)", "koordinator"],
+    ["ketua@demo.local", "Ketua Demo", "ketua"],
   ] as const) {
     const password = await ensureUser(email, name, role);
     console.log(
@@ -77,6 +79,68 @@ async function main(): Promise<void> {
         : `Akun ${role}: ${email}  (sudah ada, kata sandi tidak diubah)`,
     );
   }
+  await seedTimeline();
+}
+
+/** Contoh divisi dan pekerjaan untuk mencoba timeline (nama divisi hanya contoh). */
+async function seedTimeline(): Promise<void> {
+  const owner = await pool.query<{ id: number }>(
+    "SELECT id FROM users WHERE email = 'koordinator@demo.local'",
+  );
+  const ownerId = owner.rows[0]?.id;
+  if (!ownerId) return;
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+  const day = (offset: number) =>
+    new Date(Date.parse(`${today}T12:00:00+07:00`) + offset * 86_400_000).toLocaleDateString(
+      "en-CA",
+      {
+        timeZone: "Asia/Jakarta",
+      },
+    );
+  const plan: Array<[string, Array<[string, string, number | null]>]> = [
+    [
+      "Acara (DEMO)",
+      [
+        ["Susun rundown hari-H", "berjalan", 10],
+        ["Konfirmasi pengisi acara", "belum", 20],
+        ["Gladi resik internal", "belum", 40],
+      ],
+    ],
+    [
+      "Konsumsi (DEMO)",
+      [
+        ["Survei katering", "selesai", -2],
+        ["Pesan konsumsi tamu", "tertunda", -1],
+      ],
+    ],
+    ["Dokumentasi (DEMO)", [["Jadwal fotografer", "berjalan", 15]]],
+  ];
+  for (const [name, tasks] of plan) {
+    const division = await pool.query<{ id: number }>(
+      "INSERT INTO divisions (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id",
+      [name],
+    );
+    const divisionId = division.rows[0]!.id;
+    if (name.startsWith("Acara")) {
+      await pool.query(
+        "INSERT INTO user_divisions (user_id, division_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        [ownerId, divisionId],
+      );
+    }
+    const existing = await pool.query("SELECT 1 FROM tasks WHERE division_id = $1 LIMIT 1", [
+      divisionId,
+    ]);
+    if (existing.rowCount) continue;
+    for (const [title, status, offset] of tasks) {
+      await pool.query(
+        "INSERT INTO tasks (division_id, title, status, due_date, created_by) VALUES ($1, $2, $3, $4, $5)",
+        [divisionId, title, status, offset === null ? null : day(offset), ownerId],
+      );
+    }
+  }
+  console.log(
+    "Timeline demo: 3 divisi contoh; koordinator@demo.local memegang divisi Acara (DEMO).",
+  );
 }
 
 main()
