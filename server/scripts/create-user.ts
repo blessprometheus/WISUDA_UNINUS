@@ -1,7 +1,6 @@
-import { randomBytes } from "node:crypto";
 import { parseArgs } from "node:util";
 
-import { hashPassword, passwordProblem } from "../src/auth/password.js";
+import { generatePassword, hashPassword, passwordProblem } from "../src/auth/password.js";
 import { ALL_ROLES, type Role } from "../src/auth/session.js";
 import { pool } from "../src/db.js";
 
@@ -33,7 +32,7 @@ async function main(): Promise<void> {
   if (!ALL_ROLES.includes(role))
     throw new Error(`--role harus salah satu dari: ${ALL_ROLES.join(", ")}.`);
 
-  const password = `${randomBytes(15).toString("base64url")}!9a`;
+  const password = generatePassword();
   if (passwordProblem(password)) throw new Error("Kata sandi acak tidak memenuhi kebijakan.");
   const result = await pool.query<{ id: number }>(
     `INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id`,

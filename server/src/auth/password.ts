@@ -41,3 +41,8 @@ export function passwordProblem(password: string): string | null {
   if (kinds.length < 2) return "Kata sandi harus memadukan minimal dua jenis karakter.";
   return null;
 }
+
+/** Kata sandi sementara acak (memenuhi kebijakan). Ditampilkan sekali kepada superadmin. */
+export function generatePassword(): string {
+  return `${randomBytes(15).toString("base64url")}!9a`;
+}

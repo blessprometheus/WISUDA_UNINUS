@@ -70,12 +70,16 @@
 | GET | `/admin/import-batches` | S | Riwayat impor |
 | POST | `/admin/retention/anonymize` | S | Anonimisasi per penyelenggaraan (setelah BAAK menetapkan retensi) |
 
-### Pengguna
+### Pengguna (diimplementasikan 15 Okt 2026)
 
 | Metode | Rute | Peran | Fungsi |
 |---|---|---|---|
-| GET/POST | `/admin/users` | S | Daftar/buat akun |
-| POST | `/admin/users/:id/deactivate` , `/revoke-sessions` | S | Nonaktifkan / cabut semua sesi |
+| GET / POST | `/admin/users` | S | Daftar / buat akun (kata sandi sementara acak, **tampil sekali**) |
+| POST | `/admin/users/:id/deactivate` , `/reactivate` | S | Nonaktifkan (mencabut sesi) / aktifkan. Tidak boleh menonaktifkan diri sendiri atau superadmin aktif terakhir |
+| POST | `/admin/users/:id/revoke-sessions` , `/reset-password` , `/reset-2fa` | S | Cabut semua sesi / sandi sementara baru (mencabut sesi) / matikan 2FA untuk pengguna yang kehilangan HP |
+| GET | `/admin/audit-log` | S | Log audit berpaginasi |
+
+Akses darurat superadmin yang kehilangan HP dan kode pemulihan: `npm run admin:reset-2fa -- --email ...` (dijalankan di server oleh pemilik proyek).
 
 ### Timeline (R2a)
 

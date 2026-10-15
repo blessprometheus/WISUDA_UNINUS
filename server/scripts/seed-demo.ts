@@ -39,7 +39,9 @@ async function ensureUser(email: string, name: string, role: string): Promise<st
 }
 
 async function main(): Promise<void> {
-  const ceremony = await pool.query<{ id: number }>("SELECT id FROM ceremonies ORDER BY number DESC LIMIT 1");
+  const ceremony = await pool.query<{ id: number }>(
+    "SELECT id FROM ceremonies ORDER BY number DESC LIMIT 1",
+  );
   const ceremonyId = ceremony.rows[0]?.id;
   if (!ceremonyId) throw new Error("Jalankan npm run db:migrate dulu.");
 
@@ -60,7 +62,9 @@ async function main(): Promise<void> {
     [ceremonyId, date, `${date}T00:00:00+07:00`, `${date}T23:59:59+07:00`],
   );
 
-  console.log(`Wisudawan rekaan: ${STUDENTS.length} (NIM ${STUDENTS[0]![0]}–${STUDENTS.at(-1)![0]}).`);
+  console.log(
+    `Wisudawan rekaan: ${STUDENTS.length} (NIM ${STUDENTS[0]![0]}–${STUDENTS.at(-1)![0]}).`,
+  );
   console.log(`Sesi aktif hari ini (${date} WIB): "Gladi Resik (DEMO)", jam 00:00–23:59.`);
   for (const [email, name, role] of [
     ["petugas@demo.local", "Petugas Demo", "petugas"],

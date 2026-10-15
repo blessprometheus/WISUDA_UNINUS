@@ -10,6 +10,7 @@ import { registerAttendanceRoutes } from "./routes/attendance.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerReportRoutes } from "./routes/reports.js";
 import { registerStudentRoutes } from "./routes/students.js";
+import { registerUserRoutes } from "./routes/users.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -51,5 +52,6 @@ export async function buildApp() {
   await registerStudentRoutes(app);
   await registerAttendanceRoutes(app);
   await registerReportRoutes(app);
+  await registerUserRoutes(app);
   return app;
 }

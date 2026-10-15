@@ -307,13 +307,4 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
     await audit(request, auth.user.id, "logout");
     return ok(reply, { message: "Berhasil keluar." });
   });
-
-  app.get("/api/v1/admin/users", async (request, reply) => {
-    if (!(await requireAuth(request, reply, ["superadmin"]))) return reply;
-    const result = await pool.query(
-      `SELECT id, name, email, role, is_active, totp_enabled, created_at
-         FROM users ORDER BY created_at, id`,
-    );
-    return ok(reply, result.rows);
-  });
 }
