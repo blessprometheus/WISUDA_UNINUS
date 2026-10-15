@@ -134,14 +134,14 @@ export function Hero() {
           <div className="fade-up flex flex-wrap gap-3" style={delay(0.9)}>
             <a
               href="#informasi"
-              className="inline-flex min-h-[52px] items-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft"
+              className="inline-flex min-h-[52px] min-w-[172px] items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft"
             >
               Lihat Informasi
             </a>
             {qrEnabled && (
               <a
                 href="#kartu-qr"
-                className="inline-flex min-h-[52px] items-center rounded border-2 border-white px-7 text-[15px] font-bold text-white no-underline hover:bg-white/10"
+                className="inline-flex min-h-[52px] min-w-[172px] items-center justify-center rounded border-2 border-white px-7 text-[15px] font-bold text-white no-underline hover:bg-white/10"
               >
                 Cari NIM
               </a>
