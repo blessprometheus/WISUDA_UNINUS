@@ -141,7 +141,7 @@ export function Hero() {
             {qrEnabled && (
               <a
                 href="#kartu-qr"
-                className="inline-flex min-h-[52px] min-w-[172px] items-center justify-center rounded border-2 border-white px-7 text-[15px] font-bold text-white no-underline hover:bg-white/10"
+                className="inline-flex min-h-[52px] min-w-[172px] items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft"
               >
                 Cari NIM
               </a>
