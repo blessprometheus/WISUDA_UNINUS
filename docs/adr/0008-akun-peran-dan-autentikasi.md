@@ -23,6 +23,20 @@ Admin saat ini satu orang: **superadmin** (pemilik proyek). Pemilik proyek beren
 
 Atas permintaan pemilik proyek, kewajiban 2FA superadmin dapat dimatikan lewat `REQUIRE_SUPERADMIN_2FA=0`. **Default tetap wajib.** Bila dimatikan: superadmin tanpa 2FA langsung masuk; superadmin yang sudah mengaktifkan 2FA tetap diminta kode; dashboard menampilkan peringatan. Pengembang menyarankan tetap wajib di produksi karena akun ini mengakses data pribadi ±1.500 wisudawan (UU PDP); keputusan akhir ada pada pemilik proyek. Dapat dinyalakan kembali kapan saja tanpa perubahan kode.
 
+## Pembaruan (16 Okt 2026): login lokal sementara tanpa pendaftaran 2FA
+
+**Keputusan final pemilik proyek:** kewajiban pendaftaran verifikasi dua langkah dinonaktifkan
+sementara untuk pengujian lokal dengan `REQUIRE_SUPERADMIN_2FA=0` di `.env.local`.
+Akun superadmin yang belum mengaktifkan 2FA dapat masuk menggunakan email dan kata sandi.
+Konfigurasi lokal tidak di-commit; default aplikasi tetap wajib 2FA.
+
+**Cara menerapkan:** hentikan `npm run local:start` dengan Ctrl+C, jalankan kembali perintah
+tersebut, muat ulang `/masuk`, lalu login ulang untuk memperoleh sesi baru. Sesi yang dibuat
+sebelum konfigurasi berubah tidak otomatis dinaikkan hak aksesnya. Akun yang sebelumnya
+sudah mengaktifkan 2FA tetap diminta kode sesuai D35.
+
+**Cara mengaktifkan kembali:** isi `REQUIRE_SUPERADMIN_2FA=1`, mulai ulang API, lalu login ulang.
+
 ## Risiko
 
 | Risiko | Mitigasi |
