@@ -136,6 +136,20 @@ sudo systemctl restart wisuda-r1                 # satu-satunya sudo yang diizin
 Layanan hanya mendengarkan di `127.0.0.1:3000` (jangan membuka port 3000 ke publik di firewall).
 Cek lokal di server: `curl -sI http://127.0.0.1:3000/ | head -3` → harus `HTTP/1.1 200 OK`.
 
+### C1. Database PostgreSQL (R2, sekali, oleh pemilik proyek sebagai root)
+
+Prasyarat: PostgreSQL terpasang di aaPanel ⚠ (App Store), hanya mendengarkan `127.0.0.1`.
+
+```bash
+cd /www/wwwroot/wisuda        # setelah git clone (§C)
+sudo PSQL_BIN=/www/server/pgsql/bin/psql bash scripts/server/setup-db.sh   # jalur psql aaPanel ⚠ sesuaikan
+```
+
+Skrip menanyakan sandi akun admin PostgreSQL (tidak ditampilkan), membuat user `wisuda_app` (bukan superuser) sebagai pemilik
+database `wisuda`, lalu menulis `DATABASE_URL` dengan sandi acak ke `.env.local` (chmod 600) tanpa menampilkannya. Skrip menolak
+berjalan bila user/database sudah ada. Diuji terhadap PostgreSQL 17 lokal; **belum diuji di aaPanel** (jalur `psql` dan metode
+login admin dapat berbeda). Setelah itu, sebagai akun `wisuda`: `npm run db:migrate`.
+
 ### D. Reverse proxy & HTTPS
 
 1. ⚠ Di aaPanel buat situs untuk domain staging, lalu aktifkan *Reverse proxy* ke `http://127.0.0.1:3000`
