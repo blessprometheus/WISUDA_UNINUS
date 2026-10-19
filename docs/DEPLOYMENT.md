@@ -150,6 +150,13 @@ database `wisuda`, lalu menulis `DATABASE_URL` dengan sandi acak ke `.env.local`
 berjalan bila user/database sudah ada. Diuji terhadap PostgreSQL 17 lokal; **belum diuji di aaPanel** (jalur `psql` dan metode
 login admin dapat berbeda). Setelah itu, sebagai akun `wisuda`: `npm run db:migrate`.
 
+### D0. Port API di server aaPanel: 3011 (BUKAN 3001)
+
+Pada deploy pertama (19 Okt 2026) port `3001` ternyata **sudah dipakai proyek lain** di server yang sama (proses node milik user `www`, bukan proyek ini) sehingga `wisuda-api` gagal start (`EADDRINUSE`).
+API proyek ini dipindah ke **`127.0.0.1:3011`** lewat `API_PORT=3011` dan `API_INTERNAL_URL=http://127.0.0.1:3011` di `.env.local` (web dibangun ulang karena `API_INTERNAL_URL` dibaca saat build).
+Konsekuensi: blok Nginx `location /api/` di §D wajib `proxy_pass http://127.0.0.1:3011;`. **Jangan** mengarahkan ke 3001: itu aplikasi lain dan responsnya (`/healthz`, 401) terlihat mirip. Proses di port 3001 tidak disentuh.
+Sebelum memilih port baru: `ss -ltn` untuk memastikan kosong.
+
 ### D. Reverse proxy & HTTPS
 
 1. ⚠ Di aaPanel buat situs untuk domain staging, lalu aktifkan *Reverse proxy* ke `http://127.0.0.1:3000`
