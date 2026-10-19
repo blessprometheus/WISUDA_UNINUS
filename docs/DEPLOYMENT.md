@@ -20,7 +20,7 @@
 **Prinsip (ADR-0010, merevisi D4):** langkah di bawah dapat dijalankan **pemilik proyek** atau **Claude lewat alias SSH
 yang disiapkan pemilik proyek** (mis. `ssh wisuda-staging`). Claude tidak pernah menerima kunci privat, password,
 atau URL panel. Staging: Claude boleh menjalankan mandiri; **produksi: butuh "go" eksplisit** untuk tag/commit tertentu.
-DNS, SSL domain produksi, firewall, dan pengaturan aaPanel tetap dikerjakan pemilik proyek.
+DNS, firewall, dan pengaturan global aaPanel tetap dikerjakan pemilik proyek. Sejak D36 (19 Okt 2026), situs/reverse proxy, database, dan SSL milik proyek ini boleh dioperasikan Claude di aaPanel lewat sesi yang di-login pemilik proyek sendiri (ADR-0010).
 
 ## Status staging (15 Okt 2026)
 
