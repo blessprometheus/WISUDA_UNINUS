@@ -59,7 +59,7 @@ export function QrLookup() {
         <label htmlFor={inputId} className="text-[15px] font-bold">
           Nomor Induk Mahasiswa (NIM)
         </label>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <input
             id={inputId}
             name="nim"
@@ -71,13 +71,13 @@ export function QrLookup() {
             maxLength={30}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
-            className="min-h-[52px] min-w-0 flex-[1_1_220px] rounded border-2 border-forest-900 bg-white px-4 text-lg font-semibold tracking-wide text-forest-900 placeholder:text-ink-muted"
+            className="min-h-[52px] w-full min-w-0 rounded border-2 border-forest-900 bg-white px-4 text-base font-semibold tracking-wide text-forest-900 placeholder:text-ink-muted sm:flex-[1_1_220px] sm:text-lg"
             placeholder="Contoh: 10000000001"
           />
           <button
             type="submit"
             disabled={loading}
-            className="min-h-[52px] rounded bg-forest-900 px-7 text-[15px] font-bold text-white hover:bg-forest-800 disabled:cursor-wait disabled:opacity-70"
+            className="min-h-[52px] w-full rounded bg-forest-900 px-7 text-[15px] font-bold text-white hover:bg-forest-800 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
           >
             {loading ? "Mencari…" : "Cari data saya"}
           </button>

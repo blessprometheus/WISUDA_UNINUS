@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { ArchiveList } from "@/components/ArchiveList";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import styles from "@/components/ArchiveGallery.module.css";
 
 export const metadata: Metadata = {
   title: "Arsip Wisuda ke-69",
@@ -12,18 +14,20 @@ export const metadata: Metadata = {
 export default function Arsip69Page() {
   return (
     <>
+      <SmoothScroll />
       <div className="bg-forest-950">
         <SiteHeader />
       </div>
-      <main id="konten" className="bg-forest-900 text-white">
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-16 sm:px-8 lg:py-24">
-          <p className="text-sm font-bold uppercase tracking-[0.22em] text-gold">Arsip</p>
-          <h1 className="text-[clamp(40px,6vw,72px)] font-extrabold leading-none tracking-[-0.03em]">
-            Wisuda ke-69
-          </h1>
-          <p className="max-w-[520px] text-[17px] leading-7 text-mist">
-            Galeri foto, e-book, dan survei kepuasan wisuda sebelumnya tetap dapat diakses.
-          </p>
+      <main id="konten" className={styles.page}>
+        <div className={styles.container}>
+          <div className={styles.pageIntro}>
+            <p className={styles.eyebrow}>Dokumentasi</p>
+            <h1 className={styles.heading}>Arsip Wisuda ke-69</h1>
+            <p className={styles.description}>
+              Temukan tautan galeri foto, buku kenangan, dan survei dari Wisuda ke-69. Arsip yang
+              belum dipublikasikan ditandai dengan jelas.
+            </p>
+          </div>
           <ArchiveList />
         </div>
       </main>

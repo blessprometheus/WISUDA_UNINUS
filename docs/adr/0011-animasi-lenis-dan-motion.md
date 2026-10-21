@@ -31,3 +31,17 @@ Pemilik proyek menginginkan teks "Wisuda ke-70" beranimasi dan nuansa gulir halu
 - Dua dependensi produksi baru (`lenis`, `motion`); `npm audit --omit=dev` tetap 0 kerentanan.
 - **Kompromi performa (terukur):** Lighthouse mobile pada pratinjau Performance 92–93 (sebelum animasi hero diperkaya: 99), Accessibility/Best Practices/SEO 100, CLS 0, TBT ≈ 100 ms. LCP simulasi Lighthouse 3,1–3,2 dtk (sebelumnya 1,7 dtk) karena elemen LCP-nya adalah angka odometer yang beranimasi; waktu render **nyata** pada trace hanya ≈ 0,33 dtk (TTFB 11 ms + render delay 323 ms). Angka simulasi memakai CPU 4× lebih lambat. Bila metrik LCP lab menjadi prioritas, animasi odometer dapat diganti dengan angka statis tanpa mengubah bagian lain.
 - Perlu uji visual di perangkat nyata (belum dilakukan di HP fisik).
+
+## Penyesuaian mobile (21 Oktober 2026)
+
+**Keputusan:** Pada layar di bawah 768 px atau perangkat dengan pointer sentuh, situs memakai
+gulir native. Lenis dimuat hanya pada layar desktop dengan pointer presisi dan tanpa preferensi
+pengurangan gerakan. Paralaks kubah dan `Reveal` dihapus; garis kubah tetap tampil sebagai
+dekorasi statis setelah animasi gambar awal. Dependensi Motion dilepas karena tidak lagi dipakai.
+Pada mobile, seluruh isi hero langsung terlihat tanpa animasi pembuka; odometer menampilkan
+angka akhir 70 dan kilau berfilter dimatikan. Konten informasi dan arsip langsung terlihat
+tanpa hidrasi atau pemantau viewport.
+
+**Alasan:** Mayoritas pengunjung akan memakai HP. Gulir native menghindari loop animasi yang
+terus berjalan saat pengguna membaca informasi dan galeri. Pengujian visual dan rasa gulir di
+perangkat HP fisik tetap diperlukan sebelum rilis.

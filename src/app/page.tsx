@@ -1,6 +1,7 @@
 import { ArchiveSection } from "@/components/ArchiveSection";
 import { Hero } from "@/components/Hero";
 import { InfoSection } from "@/components/InfoSection";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { QrSection } from "@/components/QrSection";
 import { SiteFooter } from "@/components/SiteFooter";
 import { qrEnabled } from "@/content/site";
@@ -8,6 +9,7 @@ import { qrEnabled } from "@/content/site";
 export default function Home() {
   return (
     <>
+      <SmoothScroll />
       <main id="konten">
         <Hero />
         <InfoSection />

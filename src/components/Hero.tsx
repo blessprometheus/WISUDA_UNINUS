@@ -1,4 +1,3 @@
-import { Parallax } from "@/components/motion/Parallax";
 import { SiteHeader } from "@/components/SiteHeader";
 import { qrEnabled, siteConfig } from "@/content/site";
 
@@ -89,21 +88,21 @@ export function Hero() {
     <section
       id="beranda"
       aria-labelledby="judul-utama"
-      className="relative flex min-h-[880px] flex-col overflow-hidden bg-forest-800 text-white"
+      className="relative flex min-h-[min(760px,100svh)] flex-col overflow-hidden bg-forest-800 text-white sm:min-h-[880px]"
     >
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,#14452f_0%,#0e3324_55%,#082418_100%)]"
       >
-        <Parallax className="absolute inset-0" distance={160}>
+        <div className="absolute inset-0">
           <DomeLines />
-        </Parallax>
+        </div>
         <div className="hero-glow absolute bottom-[4%] left-0 h-[62%] w-[78%]" />
       </div>
 
       <SiteHeader />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl grow flex-col justify-end gap-7 px-4 pb-14 pt-12 sm:px-8 sm:pb-24 lg:px-12">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl grow flex-col justify-end gap-5 px-5 pb-12 pt-8 sm:gap-7 sm:px-8 sm:pb-24 sm:pt-12 lg:px-12">
         <p
           className="fade-up text-sm font-bold uppercase tracking-[0.22em] text-gold"
           style={delay(0.05)}
@@ -118,30 +117,33 @@ export function Hero() {
           aria-hidden="true"
           className="flex flex-col font-extrabold leading-[0.88] tracking-[-0.04em]"
         >
-          <span className="mask text-[clamp(40px,6vw,80px)]">
+          <span className="mask text-[clamp(38px,6vw,80px)]">
             <Letters text="Wisuda" start={0.05} />
           </span>
-          <span className="mask whitespace-nowrap text-[clamp(80px,22vw,300px)]">
+          <span className="mask whitespace-nowrap text-[clamp(72px,20vw,300px)]">
             <Letters text="ke-" start={0.2} />
             <Odometer />
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+        <div className="flex flex-col items-start gap-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8 sm:gap-y-4">
           <div className="fade-up flex items-center gap-4" style={delay(0.75)}>
             <span aria-hidden="true" className="h-0.5 w-12 origin-left bg-gold" />
-            <p className="text-[clamp(20px,2.4vw,26px)] font-semibold">{siteConfig.eventDate}</p>
+            <p className="text-[clamp(17px,2.4vw,26px)] font-semibold">{siteConfig.eventDate}</p>
           </div>
-          <div className="fade-up flex flex-wrap gap-3" style={delay(0.9)}>
+          <div
+            className="fade-up flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap"
+            style={delay(0.9)}
+          >
             <a
               href="#informasi"
-              className="inline-flex min-h-[52px] min-w-[172px] items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft"
+              className="inline-flex min-h-[52px] w-full items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft sm:w-auto sm:min-w-[172px]"
             >
               Lihat Informasi
             </a>
             {qrEnabled && (
               <a
                 href="#kartu-qr"
-                className="inline-flex min-h-[52px] min-w-[172px] items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft"
+                className="inline-flex min-h-[52px] w-full items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft sm:w-auto sm:min-w-[172px]"
               >
                 Cari NIM
               </a>

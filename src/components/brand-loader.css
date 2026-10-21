@@ -1,0 +1,37 @@
+.brand-loader {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.brand-loader--page {
+  min-height: 100svh;
+  background: #fff;
+}
+
+.brand-loader--inline {
+  min-height: 12rem;
+}
+
+.brand-loader__logo {
+  width: clamp(6.25rem, 11vw, 8rem);
+  height: auto;
+  object-fit: contain;
+  animation: brand-loader-pulse 1.4s ease-in-out infinite;
+}
+
+.brand-loader--inline .brand-loader__logo {
+  width: 3rem;
+}
+
+@keyframes brand-loader-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader__logo {
+    animation: none;
+  }
+}

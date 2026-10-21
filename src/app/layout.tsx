@@ -2,8 +2,6 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import "./globals.css";
-import { MotionProvider } from "@/components/motion/MotionProvider";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { siteConfig } from "@/content/site";
 
 const plusJakarta = localFont({
@@ -47,12 +45,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id" className={plusJakarta.variable}>
-      <head>
-        {/* Tanpa JavaScript: elemen yang muncul saat digulir harus langsung terlihat. */}
-        <noscript>
-          <style>{"[data-reveal]{opacity:1!important;transform:none!important}"}</style>
-        </noscript>
-      </head>
       <body className="min-h-screen antialiased">
         <a
           href="#konten"
@@ -60,8 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Lewati ke konten utama
         </a>
-        <SmoothScroll />
-        <MotionProvider>{children}</MotionProvider>
+        {children}
       </body>
     </html>
   );

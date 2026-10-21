@@ -173,11 +173,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Pengguna "kurangi gerakan": jangan sembunyikan konten sama sekali (menimpa gaya sebaris Motion). */
-  [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
-  }
   .rise,
   .fade-up {
     animation: none;
@@ -197,5 +192,34 @@ body {
   }
   .odo-ones {
     transform: translateY(-10em);
+  }
+}
+
+/* Di layar kecil, isi hero langsung terlihat dan tidak perlu menunggu animasi pembuka. */
+@media (max-width: 47.99rem) {
+  .rise,
+  .fade-up,
+  .dome-draw,
+  .odo-tens,
+  .odo-ones,
+  .gold-shine,
+  .hero-glow {
+    animation: none;
+  }
+
+  .dome-draw {
+    stroke-dashoffset: 0;
+  }
+
+  .odo-tens {
+    transform: translateY(-7em);
+  }
+
+  .odo-ones {
+    transform: translateY(-10em);
+  }
+
+  .hero-glow {
+    opacity: 1;
   }
 }
