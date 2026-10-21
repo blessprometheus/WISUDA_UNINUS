@@ -15,6 +15,12 @@ const eslintConfig = defineConfig([
     // Tooling lokal agent, bukan bagian aplikasi.
     ".opencode/**",
   ]),
+  {
+    files: ["e2e/**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

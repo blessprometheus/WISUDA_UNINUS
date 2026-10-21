@@ -60,8 +60,3 @@ export async function currentCeremonyId(): Promise<number> {
   cachedCeremonyId = id;
   return id;
 }
-
-/** Hanya untuk tes: tabel dibuat ulang sehingga cache harus dibuang. */
-export function resetCeremonyCache(): void {
-  cachedCeremonyId = null;
-}

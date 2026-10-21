@@ -1,4 +1,5 @@
 /** Konfigurasi dari environment. Aplikasi menolak start bila rahasia lemah atau tidak lengkap. */
+import { csrfOrigins } from "./lib/origins.js";
 
 function required(name: string): string {
   const value = process.env[name]?.trim();
@@ -53,10 +54,15 @@ if (new Set([sessionSecret, downloadSecret, auditSecret]).size !== 3) {
   throw new Error("SESSION_SECRET, DOWNLOAD_SECRET, dan AUDIT_SECRET harus berbeda.");
 }
 
+const publicOrigin = parseOrigin();
+
 export const config = Object.freeze({
   host: process.env.API_HOST || "127.0.0.1",
   port: parsePort(),
-  publicOrigin: parseOrigin(),
+  publicOrigin,
+  csrfOrigins: Object.freeze(
+    csrfOrigins(publicOrigin, process.env.NODE_ENV, process.env.DEV_ADDITIONAL_ORIGINS),
+  ),
   databaseUrl: required("DATABASE_URL"),
   sessionSecret,
   downloadSecret,

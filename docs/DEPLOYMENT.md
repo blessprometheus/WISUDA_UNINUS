@@ -47,15 +47,17 @@ node -v ; npm -v ; git --version ; nginx -v
 df -h /www
 echo "--- internet keluar dari server (kode HTTP):"
 curl -sS -o /dev/null -w "npm registry: %{http_code}\n" https://registry.npmjs.org/next
-curl -sS -o /dev/null -w "google fonts: %{http_code}\n" "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans"
 curl -sS -o /dev/null -w "github:       %{http_code}\n" https://github.com
 ```
 
 | Hasil | Arti | Tindakan |
 |---|---|---|
 | Semua `200` (github boleh `200`/`301`) dan `node -v` = `v24.x` | Build bisa dilakukan di server | Lanjut §2.B |
-| Salah satu bukan `200` | Server tidak bisa mengunduh paket/font | **Berhenti.** Tempel hasilnya ke Claude. Build di laptop Windows **tidak** bisa langsung diunggah (biner `swc`/`sharp` berbeda OS); perlu rancangan lain. |
+| Salah satu bukan `200` | Server tidak bisa mengunduh paket | **Berhenti.** Tempel hasilnya ke Claude. Build di laptop Windows **tidak** bisa langsung diunggah (biner `swc`/`sharp` berbeda OS); perlu rancangan lain. |
 | `node -v` bukan 24.x | Versi Node salah | Pilih Node 24 di manajer versi Node aaPanel ⚠ lalu ulangi |
+
+Font Plus Jakarta Sans sudah tersedia dalam repo. `npm run build` memakai webpack dan
+PostCSS Tailwind yang sama dengan `npm run preview:build` di komputer.
 
 ### B. Akses repo private dengan *deploy key* hanya-baca (sekali)
 

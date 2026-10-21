@@ -18,6 +18,7 @@ if (!["127.0.0.1", "localhost"].includes(parsed.hostname) || !parsed.pathname.in
 
 process.env.DATABASE_URL = testUrl;
 process.env.APP_ORIGIN = "http://127.0.0.1:3000";
+process.env.DEV_ADDITIONAL_ORIGINS = "http://192.168.1.20:3000";
 process.env.NODE_ENV = "test";
 process.env.SESSION_SECRET = randomBytes(24).toString("hex");
 process.env.DOWNLOAD_SECRET = randomBytes(24).toString("hex");
