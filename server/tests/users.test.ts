@@ -1,5 +1,6 @@
 import {
   Client,
+  TEST_PASSWORD,
   closeDatabase,
   createTestUser,
   loginAs,
@@ -278,5 +279,6 @@ describe("akun pengguna", () => {
       419,
     );
     assert.equal((await new Client(app).request("GET", "/api/v1/admin/users")).status, 401);
+    void TEST_PASSWORD;
   });
 });

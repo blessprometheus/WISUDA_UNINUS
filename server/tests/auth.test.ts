@@ -87,35 +87,6 @@ describe("login dasar", () => {
     assert.equal(res.status, 403);
   });
 
-  it("login lokal melalui localhost dan LAN terdaftar memakai sesi dan tetap wajib CSRF", async () => {
-    await createTestUser("alias@uji.id", "petugas");
-    const client = new Client(app);
-    const body = { email: "alias@uji.id", password: PASSWORD };
-    for (const origin of ["http://localhost:3000", "http://192.168.1.20:3000"]) {
-      const withoutCsrf = await client.request("POST", "/api/v1/auth/login", body, {
-        origin,
-        csrf: false,
-      });
-      assert.equal(withoutCsrf.status, 419);
-      const login = await client.request("POST", "/api/v1/auth/login", body, { origin });
-      assert.equal(login.status, 200);
-      assert.equal(
-        (await client.request("GET", "/api/v1/auth/me")).json.data.user.email,
-        body.email,
-      );
-    }
-    for (const origin of [
-      "http://localhost:3001",
-      "https://localhost:3000",
-      "http://localhost.evil:3000",
-      "http://192.168.1.21:3000",
-      "http://192.168.1.20:3001",
-    ]) {
-      const rejected = await client.request("POST", "/api/v1/auth/login", body, { origin });
-      assert.equal(rejected.status, 403);
-    }
-  });
-
   it("email tak dikenal dan password salah memberi pesan yang sama", async () => {
     await createTestUser("salah@uji.id", "petugas");
     const client = new Client(app);

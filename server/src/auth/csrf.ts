@@ -35,7 +35,7 @@ export function verifyCsrf(request: FastifyRequest, reply: FastifyReply): boolea
   const origin = request.headers.origin || request.headers.referer;
   if (origin) {
     try {
-      if (!config.csrfOrigins.includes(new URL(origin).origin)) {
+      if (new URL(origin).origin !== config.publicOrigin) {
         fail(reply, 403, "Asal permintaan tidak diizinkan.");
         return false;
       }

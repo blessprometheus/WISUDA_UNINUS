@@ -19,7 +19,6 @@
     "db:test:stop": "node server/scripts/test-db.mjs stop",
     "test:api": "node --import tsx --test --test-concurrency=1 server/tests/*.test.ts",
     "local:seed": "node --env-file-if-exists=.env.local --import tsx server/scripts/seed-demo.ts",
-    "local:reset-password": "node --env-file-if-exists=.env.local --import tsx server/scripts/reset-demo-password.ts",
     "local:start": "node scripts/local-start.mjs",
     "preview:build": "node scripts/preview-build.mjs",
     "preview:start": "node scripts/preview-start.mjs",
