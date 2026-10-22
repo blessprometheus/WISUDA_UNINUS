@@ -14,7 +14,7 @@ Admin saat ini satu orang: **superadmin** (pemilik proyek). Pemilik proyek beren
    - `petugas`: hanya halaman pemindai dan input NIM manual; tidak dapat melihat atau mengekspor daftar wisudawan.
 2. **Pembuatan dan pencabutan akun hanya oleh superadmin.** Tidak ada pendaftaran publik.
 3. ~~**Superadmin wajib 2FA (D19, final)**~~ **dicabut oleh D40 (lihat bagian Pembaruan D40)**. Isi awal: password + kode 6 digit (TOTP) dari aplikasi authenticator di HP, plus **kode pemulihan** yang disimpan terpisah. Pemilik proyek belum punya aplikasi authenticator, jadi panduan pemasangan (Google/Microsoft Authenticator) disiapkan sebelum akun dibuat. Petugas cukup password. Audit PKKMB perlu memeriksa apakah 2FA sudah ada; bila belum, ditambahkan di backend hasil adaptasi. Sesi petugas dibatasi pada halaman pemindai dan **dinonaktifkan setelah hari-H**.
-4. Password disimpan sebagai **hash modern**: **scrypt** (`node:crypto`, N=2^15, r=8, p=1, salt acak; parameter tersimpan di hash). Dipilih karena memory-hard dan tanpa dependensi native tambahan (Argon2id/bcrypt memerlukan paket pihak ketiga). Kebijakan: minimal 12 karakter, memadukan ≥ 2 jenis karakter. Tidak ada password polos di kode, log, atau repo.
+4. Password disimpan sebagai **hash modern**: **scrypt** (`node:crypto`, N=2^15, r=8, p=1, salt acak; parameter tersimpan di hash). Dipilih karena memory-hard dan tanpa dependensi native tambahan (Argon2id/bcrypt memerlukan paket pihak ketiga). Kebijakan bawaan: minimal 12 karakter, memadukan ≥ 2 jenis karakter; **pemilik proyek berhak melonggarkannya** (D43, D44). Tidak ada password polos di kode, log, atau repo.
 5. **Pembatasan percobaan login** per akun dan per IP.
 6. **Pembaruan (D14):** peran `koordinator` (mengelola timeline divisinya) dan `ketua` (melihat laporan progres) ditambahkan untuk modul timeline. Keduanya **tidak mendapat akses ke data wisudawan maupun rekap kehadiran**. Pemisahan ini wajib ditegakkan **di sisi server** (pemeriksaan peran di setiap endpoint dan query), bukan hanya dengan menyembunyikan menu. Bila kelak perlu akses ke data wisudawan, itu keputusan BAAK (ADR-0007) dan ADR baru.
 7. Login `koordinator` dan `ketua` memakai password. (Usulan 2FA untuk keduanya gugur bersama D40.)
@@ -58,6 +58,16 @@ Hanya ada **satu superadmin**: pemilik proyek. Ia yang membuat semua akun ketua,
 Pemilik proyek memutuskan memakai sandi pilihannya sendiri untuk semua akun (superadmin, ketua, koordinator, petugas scan), dengan kebijakan sandi dimatikan "dulu". Diimplementasikan sebagai pengaturan server `ENFORCE_PASSWORD_POLICY=0` (bawaan tetap **aktif**: ≥ 12 karakter, ≥ 2 jenis). Saat dimatikan hanya sandi kosong atau > 256 karakter yang ditolak. Sandi pilihan sendiri hanya dapat diset lewat CLI di server (`admin:create-accounts` kolom ke-5, `--update-passwords`, dan `admin:reset-password --password-file`); dashboard tetap membuat sandi acak. Sandi tidak ditulis di repo, kode, argumen perintah, audit, atau log; berkas yang memuatnya dihapus setelah dipakai.
 
 **Risiko yang diterima pemilik proyek (sudah disampaikan pengembang):** sandi pendek dan berpola sama antar akun (mis. `kor…@530`) mudah ditebak; daftar itu juga sudah tertulis di percakapan pengembangan sehingga dianggap bocor. Pengendali yang tetap melindungi: penguncian akun bertahap (5 gagal → 1 menit, berlipat hingga 60 menit), pembatasan laju login per IP, CSRF, dan log audit. Karena superadmin dapat melihat dan mengekspor data pribadi ± 1.500 wisudawan, sangat disarankan mengganti sandi superadmin dengan yang panjang dan unik begitu situasinya memungkinkan, lalu menyalakan kembali kebijakan (hapus `ENFORCE_PASSWORD_POLICY=0`).
+
+## Pembaruan D44 (22 Okt 2026): akun dan sandi sepenuhnya diatur pemilik proyek
+
+**Keputusan pemilik proyek:** semua hal tentang akun dan kata sandi diatur oleh pemilik proyek: siapa yang punya akun, perannya, kata sandinya, kebijakan sandi, dan kapan diganti. Berlaku untuk semua peran (superadmin, ketua, koordinator, petugas scan). Ini menegaskan D43 dan berlaku sampai pemilik proyek mencabutnya.
+
+**Konsekuensi untuk pengembang (termasuk Claude):**
+- Instruksi pemilik proyek tentang akun dan sandi **diikuti**; kebijakan sandi tidak dijadikan alasan menolak atau menunda. Risiko cukup disampaikan **sekali** dan keputusannya dicatat (ADR/rencana), tidak diulang-ulang.
+- Yang tetap berlaku (bukan soal kebijakan, melainkan penanganan rahasia): sandi **tidak** ditulis di repo, kode, log, audit, atau argumen perintah; berkas yang memuat sandi dibuat dengan izin 600 dan dihapus setelah dipakai.
+- Mekanisme keamanan lain (CSRF, penguncian akun, pembatasan laju, log audit) tidak diubah tanpa diminta.
+- Pelaksanaan di **server produksi** tetap mengikuti [ADR-0010](0010-deploy-oleh-claude-dengan-batasan.md): memasang commit tertentu memerlukan "go" eksplisit dari pemilik proyek. D44 tidak mengubah aturan itu.
 
 ## Risiko
 

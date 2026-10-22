@@ -36,3 +36,7 @@ Berlaku [ADR-0010](docs/adr/0010-deploy-oleh-claude-dengan-batasan.md) (merevisi
 - Tidak boleh di server: menyentuh proyek lain (mis. PKKMB), menghapus di luar folder aplikasi, `curl | sh`, mengubah DNS/firewall/akun/pengaturan global panel. SSL, situs, dan database proyek ini boleh lewat panel (ADR-0010 D36).
 - Catat setiap perintah pengubah di `~/deploy-wisuda.log` dan laporkan hasilnya apa adanya.
 - Jangan membuka, menyimpan, atau mengutip URL panel yang berisi jalur rahasia/token.
+
+## Akun dan kata sandi aplikasi
+
+Berlaku [ADR-0008](docs/adr/0008-akun-peran-dan-autentikasi.md) (D44): **pemilik proyek yang mengatur** akun, peran, kata sandi, dan kebijakan sandi. Ikuti instruksinya; sampaikan risiko sekali lalu catat keputusannya, jangan menolak karena kebijakan sandi. Tetap: sandi tidak ditulis di repo/kode/log/audit/argumen perintah, berkas yang memuatnya berizin 600 dan dihapus setelah dipakai, dan pemasangan ke produksi tetap menunggu "go" eksplisit (ADR-0010).
