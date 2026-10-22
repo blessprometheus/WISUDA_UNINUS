@@ -163,11 +163,13 @@ export function Users() {
                 onChange={(e) => setRole(e.target.value as Role)}
                 className={inputClass}
               >
-                {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-                  <option key={r} value={r}>
-                    {ROLE_LABEL[r]}
-                  </option>
-                ))}
+                {(Object.keys(ROLE_LABEL) as Role[])
+                  .filter((r) => r !== "superadmin")
+                  .map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_LABEL[r]}
+                    </option>
+                  ))}
               </select>
             </Field>
             <div className="flex items-end">

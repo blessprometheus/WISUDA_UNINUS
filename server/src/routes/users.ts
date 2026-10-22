@@ -38,6 +38,10 @@ export async function registerUserRoutes(app: FastifyInstance): Promise<void> {
     if (!name || !EMAIL.test(email) || !ALL_ROLES.includes(role)) {
       return fail(reply, 422, "Isi nama, email yang valid, dan peran yang sah.");
     }
+    // Hanya ada satu superadmin (pemilik proyek, dibuat lewat CLI). Peran ini tidak dapat dibuat dari dashboard.
+    if (role === "superadmin") {
+      return fail(reply, 422, "Akun superadmin tidak dapat dibuat dari dashboard.");
+    }
     const password = generatePassword();
     try {
       const result = await pool.query<{ id: number }>(

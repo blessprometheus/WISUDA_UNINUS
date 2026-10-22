@@ -49,6 +49,10 @@ sudah mengaktifkan 2FA tetap diminta kode sesuai D35.
 
 **Memasang kembali:** perlu pekerjaan baru (kode dan migrasi dibuang, bukan dimatikan); riwayat Git sebelum D40 memuat implementasinya.
 
+## Pembaruan D41 (22 Okt 2026): satu superadmin
+
+Hanya ada **satu superadmin**: pemilik proyek. Ia yang membuat semua akun ketua, koordinator, dan petugas scan dari dashboard. Peran `superadmin` **tidak dapat dibuat lewat dashboard/API** (ditolak 422); akun superadmin pertama dibuat lewat CLI (`npm run admin:create`). Pengaman "superadmin aktif terakhir tidak dapat dinonaktifkan" tetap berlaku. Bila kelak perlu superadmin cadangan (risiko bus factor), itu keputusan baru dan dibuat lewat CLI oleh pemilik proyek.
+
 ## Risiko
 
 | Risiko | Mitigasi |

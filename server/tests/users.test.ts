@@ -32,6 +32,35 @@ after(async () => {
 });
 
 describe("akun pengguna", () => {
+  it("peran superadmin tidak dapat dibuat dari dashboard; peran lain tetap bisa", async () => {
+    const before = await pool.query(
+      "SELECT COUNT(*)::int AS n FROM users WHERE role = 'superadmin'",
+    );
+    const blocked = await admin.request("POST", "/api/v1/admin/users", {
+      name: "Superadmin Kedua",
+      email: "kedua@uji.id",
+      role: "superadmin",
+    });
+    assert.equal(blocked.status, 422);
+    assert.match(String(blocked.json.message), /tidak dapat dibuat dari dashboard/);
+    const after = await pool.query(
+      "SELECT COUNT(*)::int AS n FROM users WHERE role = 'superadmin'",
+    );
+    assert.equal(after.rows[0].n, before.rows[0].n);
+    assert.equal(
+      (await pool.query("SELECT 1 FROM users WHERE email = 'kedua@uji.id'")).rowCount,
+      0,
+    );
+    for (const role of ["petugas", "koordinator", "ketua"]) {
+      const ok = await admin.request("POST", "/api/v1/admin/users", {
+        name: `Akun ${role}`,
+        email: `${role}-baru@uji.id`,
+        role,
+      });
+      assert.equal(ok.status, 201, role);
+    }
+  });
+
   it("superadmin membuat akun; kata sandi sementara tampil sekali dan dapat dipakai login", async () => {
     const created = await admin.request("POST", "/api/v1/admin/users", {
       name: "Petugas Baru",
