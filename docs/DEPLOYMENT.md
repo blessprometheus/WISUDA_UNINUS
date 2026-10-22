@@ -223,7 +223,7 @@ Bila `.next.prev` tidak ada, ganti dengan `npm run build` pada commit lama.
 
 `NEXT_PUBLIC_QR_ENABLED` dan `API_INTERNAL_URL` **dibaca saat `npm run build`, bukan saat `next start`**. Mengubahnya di environment
 layanan tidak berpengaruh; harus build ulang. Tanpa `NEXT_PUBLIC_QR_ENABLED=1` halaman R1 tidak memuat fitur Cari NIM sama sekali
-(terverifikasi: 0 kemunculan di HTML). Hanya nyalakan setelah API, database, dan data wisudawan siap (QR dibuka ± 28 Nov 2026).
+(terverifikasi: 0 kemunculan di HTML). Hanya nyalakan setelah API, database, dan data wisudawan siap (QR dibuka ± 4 Des 2026).
 Bila Nginx meneruskan `/api/*` ke API langsung, `rewrites` Next.js tidak terpakai (aman dibiarkan).
 
 Saklar lain: `NEXT_PUBLIC_STAFF_ENABLED=1` membuka halaman `/masuk` dan `/pemindai` (default mati → keduanya 404; terverifikasi).

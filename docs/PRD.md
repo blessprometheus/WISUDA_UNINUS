@@ -88,7 +88,7 @@ Belum ada fitur berstatus *Out of scope* — akan diisi bila ada yang ditolak se
 |---|---|---|
 | **R1** | Minggu 19–25 Oktober 2026 (tanggal ditetapkan rektorat, **tidak dapat digeser**; tanggal pasti *Pending*) | Satu halaman informatif Wisuda ke-70, konten statis dari surat edaran, arah visual awal yang disetujui |
 | **R2a** | ± 26 Okt–1 Nov 2026 | Database + auth + **timeline minimal** (D14, D15) |
-| **R2b** | Siap di staging ± 20 Nov; QR dibuka ± 28 Nov; **sebelum gladi (± 2 Des, perkiraan)** | Modul kehadiran QR (D7) + portal informasi lengkap; tanpa CMS |
+| **R2b** | Siap di staging ± 27 Nov (usulan); QR dibuka ± 4 Des; **sebelum gladi (9 Des, resmi)** | Modul kehadiran QR (D7) + portal informasi lengkap; tanpa CMS |
 | **R3** | Setelah 10 Desember 2026 | Mode pasca-acara: galeri, e-book, survei + arsip lintas tahun |
 
 ## 6. Acceptance criteria R1 (draft)
@@ -119,8 +119,8 @@ Belum ada fitur berstatus *Out of scope* — akan diisi bila ada yang ditolak se
 | Jaringan dinyatakan andal, tetapi lokasi belum ditentukan | Klaim belum bisa diverifikasi; mode online bergantung padanya | Uji jaringan di lokasi begitu ditentukan; gladi sebagai uji lapangan |
 | Scanner gagal membaca sebagian layar HP | Antrean melambat | Scanner terkonfirmasi bisa baca QR di layar HP; cadangan input NIM manual tercatat di sistem; uji berbagai kondisi layar |
 | Input NIM manual disalahgunakan; tanpa pemeriksaan KTM/KTP di pintu masuk (D17) | Kehadiran palsu / titipan | Catat metode, petugas, waktu; tampilkan nama/prodi untuk konfirmasi petugas; tinjau rekap manual vs scan; risiko diterima pemilik proyek |
-| Tanggal gladi masih perkiraan (± 2 Des) | Jadwal R2b bisa bergeser | Konfirmasi tanggal resmi secepatnya |
-| Data final baru ± 20 Nov dan masih berubah sampai ± 29 Nov, saat QR sudah dibuka (± 28 Nov) | Wisudawan baru/koreksi tanpa QR; data basi | Import idempoten, tambah/ubah manual, token QR stabil, batas pendaftaran ditetapkan BAAK |
+| Jam tiap sesi dan pembagian wisudawan per sesi (10 Des) belum ada | Pemindai dan komunikasi ke wisudawan | Minta surat edaran/panitia; sesi dibuat di dashboard bila jam sudah pasti |
+| Data final baru ± 27 Nov dan masih berubah sampai ± 6 Des, saat QR sudah dibuka (± 4 Des) (usulan, belum dikonfirmasi BAAK) | Wisudawan baru/koreksi tanpa QR; data basi | Import idempoten, tambah/ubah manual, token QR stabil, batas pendaftaran ditetapkan BAAK |
 | Periode retensi belum ditetapkan; tidak ada kebijakan data universitas; tidak ada pemberitahuan privasi (keputusan pemilik proyek) | Kepatuhan UU PDP | ADR-0007: BAAK pemilik data dan menetapkan retensi; desain data mendukung penghapusan/anonimisasi; rekomendasi pemberitahuan singkat tetap terbuka |
 
 ## 8. Pertanyaan terbuka

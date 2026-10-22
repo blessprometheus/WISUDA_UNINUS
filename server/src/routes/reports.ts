@@ -17,6 +17,16 @@ import {
 
 export const ANONYMIZE_CONFIRMATION = "ANONIMKAN WISUDA 70";
 
+/** Nama sesi menjadi potongan nama berkas ASCII aman (untuk membedakan rekap dua sesi pada tanggal yang sama). */
+function fileSlug(name: string): string {
+  return name
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 30);
+}
+
 async function sessionOr404(id: number | null) {
   if (!id) return null;
   const result = await pool.query<{ id: number; name: string; event_date: string }>(
@@ -159,7 +169,7 @@ export async function registerReportRoutes(app: FastifyInstance): Promise<void> 
       .header("Content-Type", "text/csv; charset=utf-8")
       .header(
         "Content-Disposition",
-        `attachment; filename="rekap-kehadiran-${session.event_date}.csv"`,
+        `attachment; filename="rekap-kehadiran-${session.event_date}-${fileSlug(session.name) || `sesi-${session.id}`}.csv"`,
       )
       .header("Cache-Control", "private, no-store")
       .send(formatCsv(rows));

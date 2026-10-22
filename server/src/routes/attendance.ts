@@ -77,6 +77,23 @@ function readSessionInput(b: Record<string, unknown>): SessionInput | string {
   return { kind, name, eventDate, startsAt, endsAt };
 }
 
+/** Nama sesi lain yang jamnya beririsan dengan [startsAt, endsAt), atau null. `exceptId` = sesi yang sedang diubah. */
+async function overlappingSessionName(
+  ceremonyId: number,
+  startsAt: Date,
+  endsAt: Date,
+  exceptId: number | null,
+): Promise<string | null> {
+  const result = await pool.query<{ name: string }>(
+    `SELECT name FROM attendance_sessions
+      WHERE ceremony_id = $1 AND starts_at < $3 AND ends_at > $2
+        AND ($4::bigint IS NULL OR id <> $4)
+      ORDER BY starts_at LIMIT 1`,
+    [ceremonyId, startsAt, endsAt, exceptId],
+  );
+  return result.rows[0]?.name ?? null;
+}
+
 function scanLogHash(raw: string): string {
   return createHmac("sha256", config.auditSecret).update(`scan:${raw}`).digest("hex");
 }
@@ -270,18 +287,14 @@ export async function registerAttendanceRoutes(app: FastifyInstance): Promise<vo
     if (!auth) return reply;
     const input = readSessionInput(body(request));
     if (typeof input === "string") return fail(reply, 422, input);
+    const ceremonyId = await currentCeremonyId();
+    const clash = await overlappingSessionName(ceremonyId, input.startsAt, input.endsAt, null);
+    if (clash) return fail(reply, 409, `Jam sesi bertabrakan dengan sesi "${clash}".`);
     try {
       const result = await pool.query<{ id: number }>(
         `INSERT INTO attendance_sessions (ceremony_id, kind, name, event_date, starts_at, ends_at)
          VALUES ($1, $2, $3, $4::date, $5, $6) RETURNING id`,
-        [
-          await currentCeremonyId(),
-          input.kind,
-          input.name,
-          input.eventDate,
-          input.startsAt,
-          input.endsAt,
-        ],
+        [ceremonyId, input.kind, input.name, input.eventDate, input.startsAt, input.endsAt],
       );
       const id = result.rows[0]!.id;
       await audit(request, auth.user.id, "session_created", {
@@ -291,7 +304,7 @@ export async function registerAttendanceRoutes(app: FastifyInstance): Promise<vo
       return ok(reply.code(201), await findSession(id));
     } catch (error) {
       if ((error as { code?: string }).code === "23505")
-        return fail(reply, 409, "Tanggal ini sudah memiliki sesi.");
+        return fail(reply, 409, "Sudah ada sesi dengan nama ini pada tanggal tersebut.");
       throw error;
     }
   });
@@ -316,6 +329,13 @@ export async function registerAttendanceRoutes(app: FastifyInstance): Promise<vo
         "Tanggal dan jenis sesi tidak dapat diubah setelah ada kehadiran. Jam masih dapat diubah.",
       );
     }
+    const clash = await overlappingSessionName(
+      await currentCeremonyId(),
+      input.startsAt,
+      input.endsAt,
+      id,
+    );
+    if (clash) return fail(reply, 409, `Jam sesi bertabrakan dengan sesi "${clash}".`);
     try {
       await pool.query(
         `UPDATE attendance_sessions SET kind = $2, name = $3, event_date = $4::date,
@@ -329,7 +349,7 @@ export async function registerAttendanceRoutes(app: FastifyInstance): Promise<vo
       return ok(reply, await findSession(id));
     } catch (error) {
       if ((error as { code?: string }).code === "23505")
-        return fail(reply, 409, "Tanggal ini sudah memiliki sesi.");
+        return fail(reply, 409, "Sudah ada sesi dengan nama ini pada tanggal tersebut.");
       throw error;
     }
   });

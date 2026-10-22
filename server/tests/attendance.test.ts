@@ -115,13 +115,55 @@ describe("sesi", () => {
     assert.equal(wrongDate.status, 422);
   });
 
-  it("satu tanggal hanya satu sesi", async () => {
+  it("jam yang bertabrakan dengan sesi lain ditolak", async () => {
     const dup = await admin.request("POST", "/api/v1/admin/attendance-sessions", {
       kind: "hari_h",
       name: "Kembar",
       ...windowAroundNow(),
     });
     assert.equal(dup.status, 409);
+    assert.match(String(dup.json.message), /bertabrakan dengan sesi "Gladi Resik"/);
+  });
+
+  it("dua sesi pada tanggal yang sama diperbolehkan (pagi dan siang), asal jam tidak beririsan", async () => {
+    const day = "2030-12-10";
+    const make = (name: string, from: string, to: string) =>
+      admin.request("POST", "/api/v1/admin/attendance-sessions", {
+        kind: "hari_h",
+        name,
+        event_date: day,
+        starts_at: `${day}T${from}:00+07:00`,
+        ends_at: `${day}T${to}:00+07:00`,
+      });
+    assert.equal((await make("Sesi Pagi", "07:00", "11:00")).status, 201);
+    assert.equal((await make("Sesi Siang", "12:00", "16:00")).status, 201);
+    // nama kembar pada tanggal yang sama (huruf besar/kecil tidak dibedakan) ditolak
+    const sameName = await make("sesi pagi", "17:00", "18:00");
+    assert.equal(sameName.status, 409);
+    assert.match(String(sameName.json.message), /nama ini pada tanggal tersebut/);
+    // beririsan dengan sesi siang ditolak; bersebelahan persis (jam akhir = jam mulai) boleh
+    const overlap = await make("Sesi Sore", "15:00", "17:00");
+    assert.equal(overlap.status, 409);
+    assert.match(String(overlap.json.message), /bertabrakan dengan sesi "Sesi Siang"/);
+    assert.equal((await make("Sesi Sore", "16:00", "17:00")).status, 201);
+    // mengubah sesi agar beririsan dengan sesi lain ditolak; mengubah jamnya sendiri boleh
+    const rows = await pool.query(
+      "SELECT id, name FROM attendance_sessions WHERE event_date = $1",
+      [day],
+    );
+    const idOf = (name: string) => rows.rows.find((r) => r.name === name).id as number;
+    const put = (id: number, name: string, from: string, to: string) =>
+      admin.request("PUT", `/api/v1/admin/attendance-sessions/${id}`, {
+        kind: "hari_h",
+        name,
+        event_date: day,
+        starts_at: `${day}T${from}:00+07:00`,
+        ends_at: `${day}T${to}:00+07:00`,
+      });
+    assert.equal((await put(idOf("Sesi Siang"), "Sesi Siang", "10:30", "16:00")).status, 409);
+    assert.equal((await put(idOf("Sesi Siang"), "Sesi Siang", "12:30", "15:30")).status, 200);
+    // bersih-bersih agar tes lain tidak terpengaruh
+    await pool.query("DELETE FROM attendance_sessions WHERE event_date = $1", [day]);
   });
 });
 
