@@ -40,6 +40,9 @@ export function InfoSection() {
               <span className="mt-1 block text-base font-normal leading-7 text-ink-muted">
                 {siteConfig.venueAddress}
               </span>
+              <span className="mt-1 block text-base font-normal leading-7 text-ink-muted">
+                Gladi resik dan wisuda diselenggarakan di lokasi yang sama.
+              </span>
             </dd>
           </div>
           <div className="grid gap-1 border-t border-forest-900/15 py-5 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(0,1fr)] sm:items-baseline sm:gap-8 sm:py-6">
