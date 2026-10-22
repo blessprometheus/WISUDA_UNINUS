@@ -24,6 +24,7 @@
     "preview:start": "node scripts/preview-start.mjs",
     "db:local:start": "node server/scripts/test-db.mjs start",
     "db:local:stop": "node server/scripts/test-db.mjs stop",
+    "admin:create-accounts": "node --env-file-if-exists=.env.local --import tsx server/scripts/create-accounts.ts",
     "admin:reset-password": "node --env-file-if-exists=.env.local --import tsx server/scripts/reset-password.ts"
   },
   "dependencies": {

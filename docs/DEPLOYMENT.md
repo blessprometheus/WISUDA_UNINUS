@@ -152,6 +152,17 @@ database `wisuda`, lalu menulis `DATABASE_URL` dengan sandi acak ke `.env.local`
 berjalan bila user/database sudah ada. Diuji terhadap PostgreSQL 17 lokal; **belum diuji di aaPanel** (jalur `psql` dan metode
 login admin dapat berbeda). Setelah itu, sebagai akun `wisuda`: `npm run db:migrate`.
 
+### C2. Akun awal (oleh pemilik proyek, di server)
+
+Kata sandi **tidak pernah** dikirim lewat chat, repo, atau log; semuanya dibuat acak oleh sistem.
+
+1. **Superadmin (satu, pemilik proyek):** `npm run admin:create -- --email EMAIL --name "NAMA" --role superadmin` (sandi acak tampil sekali di terminal).
+2. **Ketua, koordinator, petugas scan:** buat berkas daftar tanpa sandi, mis. `~/akun.csv`, berformat `email,nama,peran,divisi` (divisi hanya untuk koordinator), lalu
+   `npm run admin:create-accounts -- --file ~/akun.csv`. Sandi acak ditulis ke `~/akun-baru-<tanggal>.csv` (izin 600, tidak menimpa berkas lama) dan tidak ditampilkan di terminal.
+   Divisi dibuat otomatis dan dihubungkan ke koordinatornya; email yang sudah ada dilewati; kegagalan membatalkan seluruh daftar.
+3. Serahkan sandi ke tiap pemilik lewat jalur aman (bukan grup umum), lalu **hapus** `~/akun.csv` dan `~/akun-baru-*.csv`.
+4. Sandi sementara boleh diganti dari dashboard (Pengguna → reset sandi) atau CLI `npm run admin:reset-password`. Jangan memakai pola sandi yang sama untuk banyak akun.
+
 ### D0. Port API di server aaPanel: 3011 (BUKAN 3001)
 
 Pada deploy pertama (19 Okt 2026) port `3001` ternyata **sudah dipakai proyek lain** di server yang sama (proses node milik user `www`, bukan proyek ini) sehingga `wisuda-api` gagal start (`EADDRINUSE`).
