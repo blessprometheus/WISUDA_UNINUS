@@ -53,6 +53,8 @@ export const config = Object.freeze({
   auditSecret,
   secureCookies: process.env.NODE_ENV === "production",
   trustProxy: process.env.TRUST_PROXY === "1",
+  /** Kebijakan sandi (min. 12 karakter, 2 jenis) berlaku untuk sandi pilihan sendiri. Isi ENFORCE_PASSWORD_POLICY=0 hanya atas keputusan pemilik proyek (D43). */
+  enforcePasswordPolicy: process.env.ENFORCE_PASSWORD_POLICY !== "0",
   /** Batas login per menit per IP. Nilai lain hanya untuk tes. */
   loginRateMax: Number(process.env.LOGIN_RATE_MAX || 5),
 });

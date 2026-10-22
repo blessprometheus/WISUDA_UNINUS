@@ -162,6 +162,9 @@ Kata sandi **tidak pernah** dikirim lewat chat, repo, atau log; semuanya dibuat 
    Divisi dibuat otomatis dan dihubungkan ke koordinatornya; email yang sudah ada dilewati; kegagalan membatalkan seluruh daftar.
 3. Serahkan sandi ke tiap pemilik lewat jalur aman (bukan grup umum), lalu **hapus** `~/akun.csv` dan `~/akun-baru-*.csv`.
 4. Sandi sementara boleh diganti dari dashboard (Pengguna → reset sandi) atau CLI `npm run admin:reset-password`. Jangan memakai pola sandi yang sama untuk banyak akun.
+5. **Sandi pilihan pemilik proyek (D43):** bila kebijakan sandi sengaja dilonggarkan (`ENFORCE_PASSWORD_POLICY=0` di `.env.local`), daftar boleh memuat kolom ke-5 `sandi` (`email,nama,peran,divisi,sandi`).
+   `--update-passwords` mengganti sandi akun yang sudah ada (peran harus sama, sesi dicabut). Superadmin: `npm run admin:reset-password -- --email EMAIL --password-file ~/sandi.txt` (baris pertama berkas = sandi).
+   Berkas yang memuat sandi dibuat dengan izin 600 dan **dihapus segera** setelah dipakai. Kembalikan kebijakan dengan menghapus baris `ENFORCE_PASSWORD_POLICY=0`.
 
 ### D0. Port API di server aaPanel: 3011 (BUKAN 3001)
 

@@ -1,20 +1,36 @@
+import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 
-import { generatePassword, hashPassword } from "../src/auth/password.js";
+import { generatePassword, hashPassword, passwordProblemFor } from "../src/auth/password.js";
+import { config } from "../src/config.js";
 import { pool } from "../src/db.js";
 
 /**
- * AKSES DARURAT: mengganti kata sandi satu akun dengan sandi acak sementara (mis. superadmin lupa kata sandi).
+ * AKSES DARURAT: mengganti kata sandi satu akun (mis. superadmin lupa kata sandi).
  * Dijalankan di server oleh pemilik proyek. Semua sesi akun dicabut dan penguncian login dibuka.
- * Sandi sementara dicetak SEKALI ke terminal; simpan di pengelola kata sandi.
  *
- *   npm run admin:reset-password -- --email nama@contoh.id
+ * Tanpa --password-file: sandi ACAK dibuat dan dicetak SEKALI ke terminal; simpan di pengelola kata sandi.
+ * Dengan --password-file: baris pertama berkas dipakai sebagai sandi (tidak lewat argumen perintah, jadi tidak
+ * terlihat di daftar proses); sandi tidak dicetak. Berkas harus dihapus oleh pemakai setelahnya.
+ * Kebijakan sandi (min. 12 karakter) berlaku kecuali ENFORCE_PASSWORD_POLICY=0.
+ *
+ *   npm run admin:reset-password -- --email nama@contoh.id [--password-file ~/sandi.txt]
  */
 async function main(): Promise<void> {
-  const { values } = parseArgs({ options: { email: { type: "string" } } });
+  const { values } = parseArgs({
+    options: { email: { type: "string" }, "password-file": { type: "string" } },
+  });
   const email = values.email?.trim().toLowerCase();
   if (!email) throw new Error("Isi --email.");
-  const password = generatePassword();
+
+  let password = generatePassword();
+  const chosen = values["password-file"] !== undefined;
+  if (chosen) {
+    password = (await readFile(values["password-file"]!, "utf8")).split(/\r?\n/)[0] ?? "";
+    const problem = passwordProblemFor(password, config.enforcePasswordPolicy);
+    if (problem) throw new Error(problem);
+  }
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -32,7 +48,7 @@ async function main(): Promise<void> {
     );
     await client.query("COMMIT");
     console.log(`Kata sandi akun ${email} diganti dan semua sesinya dicabut.`);
-    console.log(`Kata sandi sementara (tampil sekali): ${password}`);
+    if (!chosen) console.log(`Kata sandi sementara (tampil sekali): ${password}`);
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

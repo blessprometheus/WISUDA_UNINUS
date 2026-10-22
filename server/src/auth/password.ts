@@ -42,6 +42,16 @@ export function passwordProblem(password: string): string | null {
   return null;
 }
 
+/**
+ * Cek sandi yang dipilih manusia. Dengan `enforce = false` (ENFORCE_PASSWORD_POLICY=0, keputusan pemilik proyek, D43)
+ * hanya sandi kosong atau terlalu panjang yang ditolak; panjang minimum dan ragam karakter tidak diperiksa.
+ */
+export function passwordProblemFor(password: string, enforce: boolean): string | null {
+  if (password.length === 0) return "Kata sandi kosong.";
+  if (password.length > 256) return "Kata sandi terlalu panjang.";
+  return enforce ? passwordProblem(password) : null;
+}
+
 /** Kata sandi sementara acak (memenuhi kebijakan). Ditampilkan sekali kepada superadmin. */
 export function generatePassword(): string {
   return `${randomBytes(15).toString("base64url")}!9a`;

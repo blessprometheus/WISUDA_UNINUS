@@ -53,6 +53,12 @@ sudah mengaktifkan 2FA tetap diminta kode sesuai D35.
 
 Hanya ada **satu superadmin**: pemilik proyek. Ia yang membuat semua akun ketua, koordinator, dan petugas scan dari dashboard. Peran `superadmin` **tidak dapat dibuat lewat dashboard/API** (ditolak 422); akun superadmin pertama dibuat lewat CLI (`npm run admin:create`). Pengaman "superadmin aktif terakhir tidak dapat dinonaktifkan" tetap berlaku. Bila kelak perlu superadmin cadangan (risiko bus factor), itu keputusan baru dan dibuat lewat CLI oleh pemilik proyek.
 
+## Pembaruan D43 (22 Okt 2026): kebijakan sandi dapat dilonggarkan atas keputusan pemilik proyek
+
+Pemilik proyek memutuskan memakai sandi pilihannya sendiri untuk semua akun (superadmin, ketua, koordinator, petugas scan), dengan kebijakan sandi dimatikan "dulu". Diimplementasikan sebagai pengaturan server `ENFORCE_PASSWORD_POLICY=0` (bawaan tetap **aktif**: ≥ 12 karakter, ≥ 2 jenis). Saat dimatikan hanya sandi kosong atau > 256 karakter yang ditolak. Sandi pilihan sendiri hanya dapat diset lewat CLI di server (`admin:create-accounts` kolom ke-5, `--update-passwords`, dan `admin:reset-password --password-file`); dashboard tetap membuat sandi acak. Sandi tidak ditulis di repo, kode, argumen perintah, audit, atau log; berkas yang memuatnya dihapus setelah dipakai.
+
+**Risiko yang diterima pemilik proyek (sudah disampaikan pengembang):** sandi pendek dan berpola sama antar akun (mis. `kor…@530`) mudah ditebak; daftar itu juga sudah tertulis di percakapan pengembangan sehingga dianggap bocor. Pengendali yang tetap melindungi: penguncian akun bertahap (5 gagal → 1 menit, berlipat hingga 60 menit), pembatasan laju login per IP, CSRF, dan log audit. Karena superadmin dapat melihat dan mengekspor data pribadi ± 1.500 wisudawan, sangat disarankan mengganti sandi superadmin dengan yang panjang dan unik begitu situasinya memungkinkan, lalu menyalakan kembali kebijakan (hapus `ENFORCE_PASSWORD_POLICY=0`).
+
 ## Risiko
 
 | Risiko | Mitigasi |
