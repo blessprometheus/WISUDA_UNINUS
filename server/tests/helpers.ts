@@ -5,7 +5,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { FastifyInstance } from "fastify";
-import * as OTPAuth from "otpauth";
 
 const testUrl =
   process.env.TEST_DATABASE_URL ?? "postgres://wisuda_test@127.0.0.1:55433/wisuda_test";
@@ -22,7 +21,6 @@ process.env.NODE_ENV = "test";
 process.env.SESSION_SECRET = randomBytes(24).toString("hex");
 process.env.DOWNLOAD_SECRET = randomBytes(24).toString("hex");
 process.env.AUDIT_SECRET = randomBytes(24).toString("hex");
-process.env.TOTP_ENCRYPTION_KEY = randomBytes(32).toString("hex");
 process.env.LOGIN_RATE_MAX = process.env.LOGIN_RATE_MAX ?? "1000";
 
 export const ORIGIN = process.env.APP_ORIGIN;
@@ -51,20 +49,9 @@ export async function createTestUser(
   return result.rows[0]!.id;
 }
 
-/** Kode TOTP untuk langkah waktu `offsetSteps` dari sekarang. */
-export function totpCode(base32: string, offsetSteps = 0): string {
-  const totp = new OTPAuth.TOTP({
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: OTPAuth.Secret.fromBase32(base32),
-  });
-  return totp.generate({ timestamp: Date.now() + offsetSteps * 30_000 });
-}
-
 export const TEST_PASSWORD = "Sandi-Uji-12345";
 
-/** Login sebagai peran non-superadmin (tanpa 2FA). */
+/** Login dengan sandi uji; kembalikan klien yang sudah punya sesi. */
 export async function loginAs(app: FastifyInstance, email: string): Promise<Client> {
   const client = new Client(app);
   const res = await client.request("POST", "/api/v1/auth/login", {
@@ -75,16 +62,10 @@ export async function loginAs(app: FastifyInstance, email: string): Promise<Clie
   return client;
 }
 
-/** Buat superadmin, selesaikan wajib-2FA, dan kembalikan klien yang sudah terverifikasi penuh. */
-export async function verifiedSuperadmin(app: FastifyInstance, email: string): Promise<Client> {
+/** Buat superadmin lalu login. */
+export async function loginSuperadmin(app: FastifyInstance, email: string): Promise<Client> {
   await createTestUser(email, "superadmin");
-  const client = await loginAs(app, email);
-  const setup = await client.request("POST", "/api/v1/auth/2fa/setup");
-  const confirm = await client.request("POST", "/api/v1/auth/2fa/confirm", {
-    code: totpCode(setup.json.data.secret as string),
-  });
-  if (confirm.status !== 200) throw new Error("Pendaftaran 2FA uji gagal.");
-  return client;
+  return loginAs(app, email);
 }
 
 export async function closeDatabase(): Promise<void> {

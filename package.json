@@ -24,7 +24,7 @@
     "preview:start": "node scripts/preview-start.mjs",
     "db:local:start": "node server/scripts/test-db.mjs start",
     "db:local:stop": "node server/scripts/test-db.mjs stop",
-    "admin:reset-2fa": "node --env-file-if-exists=.env.local --import tsx server/scripts/reset-2fa.ts"
+    "admin:reset-password": "node --env-file-if-exists=.env.local --import tsx server/scripts/reset-password.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.3",
@@ -33,7 +33,6 @@
     "fastify": "^5.12.7",
     "lenis": "^1.3.26",
     "next": "16.4.0",
-    "otpauth": "^9.5.2",
     "pg": "^8.23.1",
     "qrcode": "^1.5.4",
     "react": "19.3.0",

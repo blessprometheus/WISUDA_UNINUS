@@ -36,16 +36,6 @@ function parsePort(): number {
   return port;
 }
 
-/** Kunci AES-256 untuk rahasia TOTP: 32 byte dalam heksadesimal (64 karakter) atau base64. */
-function parseEncryptionKey(): Buffer {
-  const raw = required("TOTP_ENCRYPTION_KEY");
-  const key = /^[0-9a-f]{64}$/i.test(raw) ? Buffer.from(raw, "hex") : Buffer.from(raw, "base64");
-  if (key.length !== 32) {
-    throw new Error("TOTP_ENCRYPTION_KEY harus 32 byte (64 heks atau base64).");
-  }
-  return key;
-}
-
 const sessionSecret = requiredSecret("SESSION_SECRET");
 const downloadSecret = requiredSecret("DOWNLOAD_SECRET");
 const auditSecret = requiredSecret("AUDIT_SECRET");
@@ -61,11 +51,8 @@ export const config = Object.freeze({
   sessionSecret,
   downloadSecret,
   auditSecret,
-  totpKey: parseEncryptionKey(),
   secureCookies: process.env.NODE_ENV === "production",
   trustProxy: process.env.TRUST_PROXY === "1",
-  /** Superadmin wajib 2FA (default ya). Isi REQUIRE_SUPERADMIN_2FA=0 hanya bila pemilik proyek sengaja menonaktifkannya. */
-  require2faForSuperadmin: process.env.REQUIRE_SUPERADMIN_2FA !== "0",
   /** Batas login per menit per IP. Nilai lain hanya untuk tes. */
   loginRateMax: Number(process.env.LOGIN_RATE_MAX || 5),
 });

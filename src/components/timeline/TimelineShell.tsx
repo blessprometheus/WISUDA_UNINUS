@@ -22,7 +22,7 @@ export function TimelineShell() {
   useEffect(() => {
     void (async () => {
       const me = await api<Profile>("GET", "/api/v1/auth/me");
-      if (!me.ok || !me.data || !me.data.mfa.verified) {
+      if (!me.ok || !me.data) {
         hardNavigate(`/masuk?next=${encodeURIComponent("/timeline")}`);
         return;
       }

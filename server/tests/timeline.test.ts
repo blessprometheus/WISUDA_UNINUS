@@ -4,7 +4,7 @@ import {
   createTestUser,
   loginAs,
   resetDatabase,
-  verifiedSuperadmin,
+  loginSuperadmin,
 } from "./helpers.js";
 
 import assert from "node:assert/strict";
@@ -33,7 +33,7 @@ const dayOffset = (days: number) =>
 before(async () => {
   await resetDatabase();
   app = await buildApp();
-  admin = await verifiedSuperadmin(app, "admin@uji.id");
+  admin = await loginSuperadmin(app, "admin@uji.id");
   const idA = await createTestUser("koorA@uji.id", "koordinator");
   const idB = await createTestUser("koorB@uji.id", "koordinator");
   await createTestUser("ketua@uji.id", "ketua");

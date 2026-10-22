@@ -3,25 +3,11 @@ import { Client, closeDatabase, createTestUser, resetDatabase } from "./helpers.
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 
-import * as OTPAuth from "otpauth";
-
 import { buildApp } from "../src/app.js";
 import { hashPassword, passwordProblem, verifyPassword } from "../src/auth/password.js";
-import { decryptSecret, encryptSecret } from "../src/auth/secrets.js";
 import { pool } from "../src/db.js";
 
 const PASSWORD = "Sandi-Uji-12345";
-
-/** Kode TOTP untuk langkah waktu `offsetSteps` dari sekarang. */
-function totpCode(base32: string, offsetSteps = 0): string {
-  const totp = new OTPAuth.TOTP({
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: OTPAuth.Secret.fromBase32(base32),
-  });
-  return totp.generate({ timestamp: Date.now() + offsetSteps * 30_000 });
-}
 
 type App = Awaited<ReturnType<typeof buildApp>>;
 let app: App;
@@ -36,7 +22,7 @@ after(async () => {
   await closeDatabase();
 });
 
-describe("password & rahasia", () => {
+describe("password", () => {
   it("hash dapat diverifikasi dan password salah ditolak", async () => {
     const hash = await hashPassword(PASSWORD);
     assert.ok(hash.startsWith("scrypt$"));
@@ -49,14 +35,6 @@ describe("password & rahasia", () => {
     assert.ok(passwordProblem("pendek1A"));
     assert.ok(passwordProblem("aaaaaaaaaaaaaaaa"));
     assert.equal(passwordProblem("Cukup-Panjang-1"), null);
-  });
-
-  it("enkripsi rahasia dua arah dan menolak data yang diubah", () => {
-    const cipher = encryptSecret("JBSWY3DPEHPK3PXP");
-    assert.equal(decryptSecret(cipher), "JBSWY3DPEHPK3PXP");
-    const [v, iv, tag, body] = cipher.split(".");
-    const tampered = [v, iv, tag, `${body!.slice(0, -2)}AA`].join(".");
-    assert.throws(() => decryptSecret(tampered));
   });
 });
 
@@ -103,7 +81,7 @@ describe("login dasar", () => {
     assert.equal(unknown.json.message, wrong.json.message);
   });
 
-  it("petugas tanpa 2FA langsung terverifikasi, tetapi tidak bisa membuka /admin/users", async () => {
+  it("petugas langsung masuk, tetapi tidak bisa membuka /admin/users", async () => {
     await createTestUser("petugas@uji.id", "petugas");
     const client = new Client(app);
     const login = await client.request("POST", "/api/v1/auth/login", {
@@ -111,7 +89,7 @@ describe("login dasar", () => {
       password: PASSWORD,
     });
     assert.equal(login.status, 200);
-    assert.equal(login.json.data.mfa.verified, true);
+    assert.equal(login.json.data.user.role, "petugas");
     assert.equal((await client.request("GET", "/api/v1/auth/me")).status, 200);
     assert.equal((await client.request("GET", "/api/v1/admin/users")).status, 403);
   });
@@ -186,11 +164,8 @@ describe("penguncian akun", () => {
   });
 });
 
-describe("2FA superadmin", () => {
-  let secret = "";
-  let recovery: string[] = [];
-
-  it("login pertama superadmin: wajib setup 2FA, belum bisa mengakses apa pun", async () => {
+describe("superadmin tanpa 2FA (D40)", () => {
+  it("superadmin langsung masuk dan dapat membuka /admin/users pada login pertama", async () => {
     await createTestUser("super@uji.id", "superadmin");
     const client = new Client(app);
     const login = await client.request("POST", "/api/v1/auth/login", {
@@ -198,106 +173,65 @@ describe("2FA superadmin", () => {
       password: PASSWORD,
     });
     assert.equal(login.status, 200);
-    assert.equal(login.json.data.mfa.verified, false);
-    assert.equal(login.json.data.mfa.setup_required, true);
-    assert.equal((await client.request("GET", "/api/v1/admin/users")).status, 403);
-
-    const setup = await client.request("POST", "/api/v1/auth/2fa/setup");
-    assert.equal(setup.status, 200);
-    secret = setup.json.data.secret as string;
-    assert.match(setup.json.data.qr_data_url, /^data:image\/png;base64,/);
-
-    const bad = await client.request("POST", "/api/v1/auth/2fa/confirm", { code: "000000" });
-    assert.equal(bad.status, 401);
-
-    const confirm = await client.request("POST", "/api/v1/auth/2fa/confirm", {
-      code: totpCode(secret),
-    });
-    assert.equal(confirm.status, 200);
-    recovery = confirm.json.data.recovery_codes as string[];
-    assert.equal(recovery.length, 10);
+    assert.equal(login.json.data.user.role, "superadmin");
     assert.equal((await client.request("GET", "/api/v1/admin/users")).status, 200);
+    assert.equal((await client.request("GET", "/api/v1/auth/me")).status, 200);
   });
 
-  it("rahasia 2FA tersimpan terenkripsi, bukan polos", async () => {
-    const row = await pool.query("SELECT totp_secret_enc FROM users WHERE email = 'super@uji.id'");
-    assert.ok(row.rows[0].totp_secret_enc.startsWith("v1."));
-    assert.ok(!row.rows[0].totp_secret_enc.includes(secret));
+  it("tanpa login atau dengan password salah tetap tidak bisa membuka /admin/users", async () => {
+    assert.equal((await new Client(app).request("GET", "/api/v1/admin/users")).status, 401);
+    const client = new Client(app);
+    const wrong = await client.request("POST", "/api/v1/auth/login", {
+      email: "super@uji.id",
+      password: "Salah-Sandi-999",
+    });
+    assert.equal(wrong.status, 401);
+    assert.equal((await client.request("GET", "/api/v1/admin/users")).status, 401);
   });
 
-  it("login berikutnya meminta kode; kode yang sama tidak bisa dipakai ulang", async () => {
+  it("respons tidak memuat sisa 2FA dan endpoint 2FA sudah tidak ada", async () => {
     const client = new Client(app);
     const login = await client.request("POST", "/api/v1/auth/login", {
       email: "super@uji.id",
       password: PASSWORD,
     });
-    assert.equal(login.json.data.mfa.verified, false);
-    assert.equal(login.json.data.mfa.enabled, true);
-    assert.equal((await client.request("GET", "/api/v1/admin/users")).status, 403);
-
-    const wrong = await client.request("POST", "/api/v1/auth/2fa/verify", { code: "123456" });
-    assert.equal(wrong.status, 401);
-
-    // Langkah berikutnya (+1) sah karena toleransi ±1; langkah konfirmasi (0) sudah terpakai.
-    const next = totpCode(secret, 1);
-    const good = await client.request("POST", "/api/v1/auth/2fa/verify", { code: next });
-    assert.equal(good.status, 200);
-    assert.equal((await client.request("GET", "/api/v1/admin/users")).status, 200);
-
-    const second = new Client(app);
-    await second.request("POST", "/api/v1/auth/login", {
-      email: "super@uji.id",
-      password: PASSWORD,
-    });
-    const replay = await second.request("POST", "/api/v1/auth/2fa/verify", { code: next });
-    assert.equal(replay.status, 401);
+    assert.equal("mfa" in login.json.data, false);
+    for (const path of ["setup", "confirm", "verify"]) {
+      assert.equal(
+        (await client.request("POST", `/api/v1/auth/2fa/${path}`, {})).status,
+        404,
+        path,
+      );
+    }
+    assert.equal((await client.request("POST", "/api/v1/admin/users/1/reset-2fa", {})).status, 404);
   });
 
-  it("sesi yang belum lolos 2FA tidak bisa mengganti rahasia 2FA", async () => {
+  it("skema tidak lagi menyimpan rahasia 2FA", async () => {
+    const columns = await pool.query(
+      `SELECT table_name, column_name FROM information_schema.columns
+        WHERE table_schema = 'public' AND (column_name ILIKE '%totp%' OR column_name ILIKE '%mfa%')`,
+    );
+    assert.equal(columns.rowCount, 0);
+    const tables = await pool.query(
+      "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'recovery_codes'",
+    );
+    assert.equal(tables.rowCount, 0);
+  });
+
+  it("sesi lama dicabut saat login baru di klien yang sama (anti session-fixation)", async () => {
     const client = new Client(app);
     await client.request("POST", "/api/v1/auth/login", {
       email: "super@uji.id",
       password: PASSWORD,
     });
-    const before = await pool.query(
-      "SELECT totp_secret_enc FROM users WHERE email = 'super@uji.id'",
-    );
-    const setup = await client.request("POST", "/api/v1/auth/2fa/setup");
-    assert.equal(setup.status, 409);
-    const after = await pool.query(
-      "SELECT totp_secret_enc FROM users WHERE email = 'super@uji.id'",
-    );
-    assert.equal(after.rows[0].totp_secret_enc, before.rows[0].totp_secret_enc);
-  });
-
-  it("kode pemulihan bekerja sekali saja", async () => {
-    const code = recovery[0]!;
-    const first = new Client(app);
-    await first.request("POST", "/api/v1/auth/login", {
-      email: "super@uji.id",
-      password: PASSWORD,
-    });
-    const used = await first.request("POST", "/api/v1/auth/2fa/verify", { code });
-    assert.equal(used.status, 200);
-
-    const second = new Client(app);
-    await second.request("POST", "/api/v1/auth/login", {
-      email: "super@uji.id",
-      password: PASSWORD,
-    });
-    const again = await second.request("POST", "/api/v1/auth/2fa/verify", { code });
-    assert.equal(again.status, 401);
-  });
-
-  it("sesi diganti baru setelah lolos 2FA (anti session-fixation)", async () => {
-    const client = new Client(app);
+    const first = client.cookie("wisuda_session");
     await client.request("POST", "/api/v1/auth/login", {
       email: "super@uji.id",
       password: PASSWORD,
     });
-    const pending = client.cookie("wisuda_session");
-    await client.request("POST", "/api/v1/auth/2fa/verify", { code: recovery[1]! });
-    assert.notEqual(client.cookie("wisuda_session"), pending);
+    const second = client.cookie("wisuda_session");
+    assert.ok(first && second);
+    assert.notEqual(first, second);
   });
 });
 

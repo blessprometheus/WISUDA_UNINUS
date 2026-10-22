@@ -29,10 +29,8 @@ add TRUST_PROXY 1
 add SESSION_SECRET "$(rand)"
 add DOWNLOAD_SECRET "$(rand)"
 add AUDIT_SECRET "$(rand)"
-add TOTP_ENCRYPTION_KEY "$(rand)"
 [ "${STAFF:-0}" = "1" ] && add NEXT_PUBLIC_STAFF_ENABLED 1
 chmod 600 "$ENV_FILE"
 
 echo "Variabel ditambahkan: ${added[*]:-(tidak ada, semua sudah ada)}"
-echo "Nilai rahasia tidak ditampilkan. CADANGKAN TOTP_ENCRYPTION_KEY di password manager (hilang = 2FA semua akun tidak bisa dipakai):"
-echo "  grep '^TOTP_ENCRYPTION_KEY=' $ENV_FILE"
+echo "Nilai rahasia tidak ditampilkan. Jangan dibagikan; simpan salinan .env.local di tempat aman."

@@ -19,9 +19,8 @@
 
 | Tabel | Kolom penting | Catatan |
 |---|---|---|
-| `users` | `id`, `name`, `email` (unik, huruf kecil), `password_hash` (scrypt/argon2id), `role` ∈ {`superadmin`,`petugas`,`koordinator`,`ketua`}, `is_active`, `totp_secret_enc`, `totp_enabled`, `failed_logins`, `locked_until`, `created_at` | `totp_enabled` wajib `true` untuk `superadmin`; rahasia TOTP dienkripsi dengan kunci dari environment |
+| `users` | `id`, `name`, `email` (unik, huruf kecil), `password_hash` (scrypt/argon2id), `role` ∈ {`superadmin`,`petugas`,`koordinator`,`ketua`}, `is_active`, `failed_logins`, `locked_until`, `created_at` | kolom 2FA dihapus pada migrasi `003` (D40) |
 | `user_sessions` | `id`, `user_id`, `token_hash` (SHA-256, unik), `expires_at`, `created_at` | token mentah hanya di cookie `httpOnly`; sesi petugas dibatasi hingga masa acara |
-| `recovery_codes` | `user_id`, `code_hash`, `used_at` | kode pemulihan 2FA, sekali pakai |
 | `audit_log` | `id`, `user_id`, `action`, `entity`, `entity_id`, `detail` (jsonb), `ip_hash`, `created_at` | login (berhasil/gagal), impor, ubah/tambah/nonaktifkan wisudawan, ekspor, penghapusan/anonimisasi, buat/nonaktifkan akun |
 
 ### Penyelenggaraan & wisudawan
@@ -59,4 +58,4 @@ Perintah/halaman superadmin yang menjalankan, **setelah BAAK menetapkan periode*
 - Tabel **`ceremonies` disetujui**.
 - **Jendela waktu sesi:** scan QR mengikuti jendela; **input manual boleh di luar jendela tetapi ditandai** `attendances.outside_window = TRUE` dan terlihat di rekap.
 - **Masa sesi login:** petugas 12 jam, superadmin 8 jam, koordinator/ketua 7 hari.
-- Tambahan teknis: `users.totp_last_step` (cegah pemakaian ulang kode TOTP), `user_sessions.mfa_verified` (sesi belum lolos 2FA tidak dapat mengakses fitur apa pun). Superadmin **wajib** 2FA; peran lain opsional (ADR-0008).
+- 2FA dihapus (D40): kolom `totp_*`, `user_sessions.mfa_verified`, dan tabel `recovery_codes` dibuang pada migrasi `003_hapus_2fa.sql` (semua sesi dicabut saat migrasi).

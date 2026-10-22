@@ -30,7 +30,7 @@
 
 | # | Temuan | Dampak | Tindakan di adaptasi |
 |---|---|---|---|
-| 1 | **Tidak ada 2FA** (pencarian `totp/2fa/otp` kosong) | Bertentangan dengan D19 | Tambah TOTP + kode pemulihan untuk `superadmin` |
+| 1 | **Tidak ada 2FA** (pencarian `totp/2fa/otp` kosong) | Bertentangan dengan D19 | ~~Tambah TOTP + kode pemulihan~~ → dibangun (D27), lalu **dihapus atas keputusan pemilik proyek (D40)** |
 | 2 | Pembatasan login hanya **per IP**, tanpa penguncian per akun | Tebak password terdistribusi tidak terhalang | Tambah penghitung gagal per akun + jeda bertahap |
 | 3 | Peran terbatas pada `admin`/`operator`/`rekap` (CHECK di database) | Belum ada `superadmin`, `petugas`, `koordinator`, `ketua` | Migrasi peran baru; pemisahan hak akses timeline vs data wisudawan ditegakkan di server |
 | 4 | **Rate limit memakai IP klien.** Bila `TRUST_PROXY=1` tidak diset di belakang Nginx, semua permintaan tampak berasal dari satu IP; bila diset, jaringan kampus bersama (NAT) tetap menyatukan banyak mahasiswa | Pencarian NIM bisa terkena 429 massal saat banyak wisudawan mengunduh QR bersamaan | Atur `TRUST_PROXY` dengan benar di aaPanel; uji beban unduhan QR; evaluasi batas 120/menit setelah uji. Catatan: PKKMB (± 1.300 mahasiswa) berjalan lancar dengan konfigurasi ini |

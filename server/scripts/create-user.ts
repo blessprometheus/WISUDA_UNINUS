@@ -6,7 +6,6 @@ import { pool } from "../src/db.js";
 
 /**
  * Buat pengguna. Kata sandi acak dicetak SEKALI ke terminal; simpan di pengelola kata sandi.
- * Superadmin diwajibkan menyiapkan 2FA pada login pertama.
  *
  *   npm run admin:create -- --email nama@contoh.id --name "Nama" --role superadmin
  */

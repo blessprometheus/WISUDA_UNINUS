@@ -4,7 +4,7 @@ import {
   createTestUser,
   loginAs,
   resetDatabase,
-  verifiedSuperadmin,
+  loginSuperadmin,
 } from "./helpers.js";
 
 import assert from "node:assert/strict";
@@ -52,7 +52,7 @@ const scan = (client: Client, nimOrToken: string, manual = false) =>
 before(async () => {
   await resetDatabase();
   app = await buildApp();
-  admin = await verifiedSuperadmin(app, "admin@uji.id");
+  admin = await loginSuperadmin(app, "admin@uji.id");
   await createTestUser("petugas@uji.id", "petugas");
   await createTestUser("koordinator@uji.id", "koordinator");
   await createTestUser("ketua@uji.id", "ketua");

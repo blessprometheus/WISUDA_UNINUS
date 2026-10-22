@@ -4,7 +4,7 @@ import {
   createTestUser,
   loginAs,
   resetDatabase,
-  verifiedSuperadmin,
+  loginSuperadmin,
 } from "./helpers.js";
 
 import assert from "node:assert/strict";
@@ -35,7 +35,7 @@ const importCsv = (client: Client, csv: string, dryRun = false) =>
 before(async () => {
   await resetDatabase();
   app = await buildApp();
-  admin = await verifiedSuperadmin(app, "admin@uji.id");
+  admin = await loginSuperadmin(app, "admin@uji.id");
   await createTestUser("petugas@uji.id", "petugas");
 });
 

@@ -1,7 +1,6 @@
 const PASS = process.env.E2E_PASSWORD;
 if (!PASS) throw new Error("E2E_PASSWORD wajib diisi (sandi akun uji palsu).");
 const { chromium } = require("playwright");
-const OTPAuth = require("otpauth");
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const out = process.argv[2];
@@ -22,13 +21,6 @@ const PSQL_ARGS = [
   "-c",
 ];
 const sql = (q) => execFileSync(PSQL, [...PSQL_ARGS, q], { encoding: "utf8" }).trim();
-const code = (secret, step = 0) =>
-  new OTPAuth.TOTP({
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: OTPAuth.Secret.fromBase32(secret),
-  }).generate({ timestamp: Date.now() + step * 30000 });
 
 const CSV = [
   "NO,ANGKATAN,NIM,NAMA,PROGRAM STUDI,TANGGAL LULUS,,,",
@@ -42,10 +34,10 @@ const CSV = [
 let lastPage = null;
 (async () => {
   sql(
-    "TRUNCATE attendances, unregistered_entries, scan_logs RESTART IDENTITY; DELETE FROM user_sessions; DELETE FROM recovery_codes; DELETE FROM audit_log;",
+    "TRUNCATE attendances, unregistered_entries, scan_logs RESTART IDENTITY; DELETE FROM user_sessions; DELETE FROM audit_log;",
   );
   sql(
-    "UPDATE users SET totp_enabled=false, totp_secret_enc=NULL, totp_last_step=NULL, failed_logins=0, locked_until=NULL, is_active=true; DELETE FROM users WHERE email='baru@uji.id';",
+    "UPDATE users SET failed_logins=0, locked_until=NULL, is_active=true; DELETE FROM users WHERE email='baru@uji.id';",
   );
   sql(
     "DELETE FROM attendance_sessions WHERE name='Hari-H Wisuda'; UPDATE attendance_sessions SET is_active=true;",
@@ -67,19 +59,13 @@ let lastPage = null;
   await page.waitForURL(/\/masuk\?next=/);
   console.log("1 tanpa login -> /masuk");
 
-  // 2. Superadmin: login + wajib 2FA lewat UI -> mendarat di /admin
+  // 2. Superadmin: login lewat UI -> langsung mendarat di /admin (tanpa 2FA)
   await page.getByLabel("Email").fill("super@uji.id");
   await page.getByLabel("Kata sandi").fill(PASS);
   await page.getByRole("button", { name: "Masuk" }).click();
-  await page.getByRole("heading", { name: "Aktifkan verifikasi dua langkah" }).waitFor();
-  const secret = (await page.locator("p span.font-mono").innerText()).trim();
-  await page.getByLabel("Kode 6 digit").fill(code(secret));
-  await page.getByRole("button", { name: "Aktifkan 2FA" }).click();
-  await page.getByText("Simpan kode pemulihan ini sekarang").waitFor();
-  await page.getByRole("button", { name: "Saya sudah menyimpan kodenya" }).click();
   await page.waitForURL(/\/admin$/);
   await page.getByRole("heading", { name: "Ringkasan" }).waitFor();
-  console.log("2 login superadmin + 2FA -> /admin");
+  console.log("2 login superadmin -> /admin");
 
   // 3. Ringkasan menampilkan data sesi aktif
   await page.getByText("Wisudawan aktif").waitFor();

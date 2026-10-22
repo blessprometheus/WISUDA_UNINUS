@@ -1,17 +1,9 @@
 const PASS = process.env.E2E_PASSWORD;
 if (!PASS) throw new Error("E2E_PASSWORD wajib diisi (sandi akun uji palsu).");
 const { chromium } = require("playwright");
-const OTPAuth = require("otpauth");
 const assert = require("node:assert/strict");
 const out = process.argv[2];
 const BASE = process.env.E2E_BASE || "http://localhost:3100";
-const code = (secret) =>
-  new OTPAuth.TOTP({
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: OTPAuth.Secret.fromBase32(secret),
-  }).generate();
 
 let lastPage = null;
 async function newUser(browser) {
@@ -38,18 +30,13 @@ const psql = (q) =>
 
 (async () => {
   psql(
-    "DELETE FROM task_notes; DELETE FROM tasks; DELETE FROM user_divisions; DELETE FROM divisions; DELETE FROM user_sessions; DELETE FROM recovery_codes; DELETE FROM users WHERE email IN ('koora@uji.id','koorb@uji.id','ketua@uji.id'); UPDATE users SET totp_enabled=false, totp_secret_enc=NULL, totp_last_step=NULL, failed_logins=0, locked_until=NULL;",
+    "DELETE FROM task_notes; DELETE FROM tasks; DELETE FROM user_divisions; DELETE FROM divisions; DELETE FROM user_sessions; DELETE FROM users WHERE email IN ('koora@uji.id','koorb@uji.id','ketua@uji.id'); UPDATE users SET failed_logins=0, locked_until=NULL;",
   );
   const browser = await chromium.launch({ channel: "chrome" });
 
-  // 1. Superadmin (2FA) -> /admin
+  // 1. Superadmin -> /admin (tanpa 2FA)
   const sa = await newUser(browser);
   await login(sa.page, "super@uji.id", PASS);
-  await sa.page.getByRole("heading", { name: "Aktifkan verifikasi dua langkah" }).waitFor();
-  const secret = (await sa.page.locator("p span.font-mono").innerText()).trim();
-  await sa.page.getByLabel("Kode 6 digit").fill(code(secret));
-  await sa.page.getByRole("button", { name: "Aktifkan 2FA" }).click();
-  await sa.page.getByRole("button", { name: "Saya sudah menyimpan kodenya" }).click();
   await sa.page.waitForURL(/\/admin$/);
   console.log("1 superadmin masuk");
 

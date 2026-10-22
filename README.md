@@ -47,8 +47,7 @@ bagian **Uji lokal lengkap** di bawah. Jangan jalankan `test:api` pada database 
 **Batas kesetaraan:** HTML, CSS, aset, dan saklar fitur memakai hasil build production yang
 sama. Pratinjau komputer masih memakai HTTP dan database demo; API memakai cookie HTTP agar
 login berfungsi. Deploy memakai HTTPS, cookie `Secure`, origin domain, dan data server sendiri,
-sehingga alur login dan data perlu diperiksa lagi di staging HTTPS. `REQUIRE_SUPERADMIN_2FA=0`
-di `.env.local` tetap berlaku untuk pratinjau ini; default deploy mewajibkan 2FA. Samakan
+sehingga alur login dan data perlu diperiksa lagi di staging HTTPS. Samakan
 `NEXT_PUBLIC_QR_ENABLED`, `NEXT_PUBLIC_STAFF_ENABLED`, dan `API_INTERNAL_URL` saat build dengan
 target deploy agar fitur yang terlihat sama. Port 3000 dan 3001 harus bebas sebelum
 `preview:start` dijalankan.
@@ -84,7 +83,7 @@ npm run test:api
 npm run db:test:stop
 ```
 
-Superadmin wajib mengaktifkan 2FA pada login pertama (aplikasi authenticator di HP).
+Tidak ada 2FA (dihapus, D40): semua peran masuk dengan email dan kata sandi. Kata sandi dibuat acak oleh sistem dan tampil sekali.
 
 ## Uji lokal lengkap (data rekaan)
 
@@ -112,5 +111,5 @@ npm run local:start        # API :3001 + situs :3000 (Ctrl+C untuk berhenti)
 - Petugas: <http://127.0.0.1:3000/masuk> → `petugas@demo.local` → `/pemindai` → pilih meja → arahkan scanner ke QR.
 - Login hanya menerima origin yang sama persis dengan `APP_ORIGIN` di `.env.local`.
   Setelah mengubah `.env.local`, hentikan server dengan Ctrl+C lalu jalankan lagi.
-- Superadmin (`super@demo.local`) wajib mendaftarkan 2FA (aplikasi authenticator di HP).
+- Superadmin (`super@demo.local`) langsung masuk dengan email dan kata sandi (tanpa 2FA).
 - `local:seed` menolak berjalan di database yang bukan lokal atau namanya tidak memuat dev/demo/test. Kata sandi demo hanya tampil sekali.

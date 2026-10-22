@@ -21,7 +21,7 @@ export async function registerUserRoutes(app: FastifyInstance): Promise<void> {
   app.get("/api/v1/admin/users", async (request, reply) => {
     if (!(await requireAuth(request, reply, ["superadmin"]))) return reply;
     const result = await pool.query(
-      `SELECT id, name, email, role, is_active, totp_enabled, created_at
+      `SELECT id, name, email, role, is_active, created_at
          FROM users ORDER BY created_at, id`,
     );
     return ok(reply, result.rows);
@@ -119,36 +119,6 @@ export async function registerUserRoutes(app: FastifyInstance): Promise<void> {
     await revokeAllSessions(id);
     await audit(request, auth.user.id, "user_password_reset", { entity: "users", entityId: id });
     return ok(reply, { id, temporary_password: password });
-  });
-
-  // Untuk pengguna yang kehilangan perangkat authenticator. Superadmin yang terkunci sendiri memakai skrip CLI.
-  app.post("/api/v1/admin/users/:id/reset-2fa", async (request, reply) => {
-    const auth = await requireAuth(request, reply, ["superadmin"], { mutation: true });
-    if (!auth) return reply;
-    const id = positiveId(params(request).id);
-    if (!id) return fail(reply, 422, "Pengguna tidak valid.");
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      const result = await client.query(
-        "UPDATE users SET totp_enabled = FALSE, totp_secret_enc = NULL, totp_last_step = NULL WHERE id = $1",
-        [id],
-      );
-      if (result.rowCount !== 1) {
-        await client.query("ROLLBACK");
-        return fail(reply, 404, "Pengguna tidak ditemukan.");
-      }
-      await client.query("DELETE FROM recovery_codes WHERE user_id = $1", [id]);
-      await client.query("DELETE FROM user_sessions WHERE user_id = $1", [id]);
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
-    await audit(request, auth.user.id, "user_2fa_reset", { entity: "users", entityId: id });
-    return ok(reply, { id });
   });
 
   app.get("/api/v1/admin/audit-log", async (request, reply) => {

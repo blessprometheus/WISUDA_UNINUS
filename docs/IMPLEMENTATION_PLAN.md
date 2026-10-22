@@ -19,6 +19,7 @@
 | D7 | 14 Okt 2026 | **Revisi D1**: modul kehadiran QR (import data, cari NIM + unduh QR, sesi gladi & hari-H, scan, rekap) masuk R2; CMS konten dihapus; absensi manual sebagai cadangan | [ADR-0003](adr/0003-revisi-ruang-lingkup-modul-kehadiran.md) |
 | D8 | 14 Okt 2026 | Pengambilan QR cukup dengan NIM, dengan mitigasi wajib — risiko diterima pemilik proyek | [ADR-0004](adr/0004-pencarian-qr-cukup-dengan-nim.md) |
 | D9 | 14 Okt 2026 | Pemindaian: 4 scanner USB di 4 laptop petugas, halaman web online, tanpa PWA/offline; token QR acak pendek (lookup DB). Lokasi belum ditentukan. | [ADR-0005](adr/0005-pemindai-usb-di-laptop-online.md) |
+| D40 | 22 Okt 2026 | **2FA dihapus seluruhnya** atas keputusan pemilik proyek (menggantikan D19 dan D35): kode, endpoint, layar, tes, dependensi `otpauth`, dan kolom/tabel database (migrasi `003_hapus_2fa.sql`, semua sesi dicabut). Pengganti akses darurat: `admin:reset-password`. Pengembang tetap menyarankan mempertimbangkan 2FA; risiko diterima pemilik proyek. 73 tes API lulus; alur browser nyata terverifikasi. **Belum dipasang ke produksi** | [ADR-0008](adr/0008-akun-peran-dan-autentikasi.md) |
 | D39 | 22 Okt 2026 | **D38 dipasang ke produksi** ("go b3d7296"): cadangan DB, migrasi 002, build API, restart `wisuda-api`; skema terverifikasi (batas lama hilang, indeks nama-per-tanggal dan satu-aktif ada). Pemilik proyek: lokasi gladi dan wisuda sama; jam sesi menyusul. Catatan "lokasi yang sama" ditambahkan di halaman Informasi (belum dipasang) | — |
 | D38 | 22 Okt 2026 | **Beberapa sesi per tanggal** (migrasi `002`): batas UNIQUE (ceremony, tanggal) dilepas karena hari-H punya sesi pagi dan siang. Penggantinya: nama sesi unik per tanggal (tanpa beda huruf besar/kecil) + jam sesi tidak boleh beririsan (dicek di aplikasi; sesi bersebelahan persis boleh) + tetap hanya satu sesi aktif. Nama berkas rekap CSV memuat nama sesi. 79 tes lulus; mutasi (cek bentrok dimatikan) terdeteksi 2 tes. Dipasang ke produksi 22 Okt (D39) | — |
 | D37 | 22 Okt 2026 | **Jadwal & lokasi final dari pemilik proyek**: gladi Rabu 9 Des 2026, wisuda Kamis 10 Des 2026 dua sesi (pagi, siang), The Trans Luxury Hotel (Jl. Gatot Subroto No. 289, Bandung). Menggantikan Sabtu 5 Des. Frontend diperbarui. Jadwal R2 digeser (usulan, belum dikonfirmasi BAAK). Dampak pada backend diselesaikan di D38 | — |
@@ -82,7 +83,7 @@ Acuan (dikonfirmasi 22 Okt 2026, D37): gladi resik **Rabu 9 Des 2026**, hari-H w
 |---|---|---|
 | 19–25 Okt | **R1 live** (lihat jadwal R1) | Persetujuan production |
 | 19–25 Okt (paralel R1) | **Audit backend PKKMB** (auth, staff, online, konfigurasi, dependensi) — laporan ke pemilik proyek | Gate sebelum adaptasi (ADR-0009) |
-| 26 Okt–1 Nov | Setup database, auth (superadmin + 2FA bila disetujui, koordinator, ketua), **timeline minimal** (± 10 divisi; status, tenggat, catatan progres; tampilan ringkas ketua) | Timeline dipakai koordinator |
+| 26 Okt–1 Nov | Setup database, auth (superadmin tanpa 2FA sejak D40, koordinator, ketua), **timeline minimal** (± 10 divisi; status, tenggat, catatan progres; tampilan ringkas ketua) | Timeline dipakai koordinator |
 | 2–20 Nov | **Modul kehadiran** (adaptasi dari PKKMB): import Excel (validasi + duplikat NIM), pencarian NIM + unduh QR, sesi, halaman pemindai (scanner HID + input manual), rekap + ekspor, log audit, retensi | Fitur lengkap di staging |
 | ± 16–27 Nov (usulan, geser +7 hari) | **Data final dari BAAK + retensi tertulis** | Sebelum import data asli ke produksi |
 | 28 Nov–3 Des | Uji: simulasi scan skala penuh (4 scanner nyata, layar HP nyata), uji beban unduhan QR, uji restore backup, tinjauan keamanan, review kode | Persetujuan production |
@@ -96,7 +97,7 @@ Acuan (dikonfirmasi 22 Okt 2026, D37): gladi resik **Rabu 9 Des 2026**, hari-H w
 ## Input yang ditunggu dari pemilik proyek
 
 - [ ] **Ubah akses Google Sheet data mahasiswa menjadi Restricted** (saat ini dapat dibaca publik)
-- [ ] Pasang aplikasi authenticator (Google/Microsoft Authenticator) di HP superadmin sebelum akun dibuat (± akhir Okt)
+- [x] ~~Pasang aplikasi authenticator di HP superadmin~~ tidak diperlukan: 2FA dihapus (D40)
 - [ ] BAAK menetapkan periode retensi data wisudawan secara tertulis (sebelum import data asli ke produksi)
 - [ ] Konfirmasi PostgreSQL terpasang/dapat dipasang di server aaPanel **ini** (PKKMB dikatakan memakai PostgreSQL; belum jelas server yang sama)
 - [x] Tanggal gladi (9 Des) dan hari-H (10 Des, 2 sesi) serta lokasi (The Trans Luxury Hotel, sama untuk gladi dan wisuda) dikonfirmasi 22 Okt. **Belum:** jam tiap sesi (menyusul), pembagian wisudawan per sesi

@@ -1,38 +1,38 @@
 import { parseArgs } from "node:util";
 
+import { generatePassword, hashPassword } from "../src/auth/password.js";
 import { pool } from "../src/db.js";
 
 /**
- * AKSES DARURAT: mematikan 2FA satu akun (mis. superadmin kehilangan HP dan kode pemulihan).
- * Dijalankan di server oleh pemilik proyek. Akun diwajibkan mendaftarkan 2FA lagi saat login berikutnya.
+ * AKSES DARURAT: mengganti kata sandi satu akun dengan sandi acak sementara (mis. superadmin lupa kata sandi).
+ * Dijalankan di server oleh pemilik proyek. Semua sesi akun dicabut dan penguncian login dibuka.
+ * Sandi sementara dicetak SEKALI ke terminal; simpan di pengelola kata sandi.
  *
- *   npm run admin:reset-2fa -- --email nama@contoh.id
+ *   npm run admin:reset-password -- --email nama@contoh.id
  */
 async function main(): Promise<void> {
   const { values } = parseArgs({ options: { email: { type: "string" } } });
   const email = values.email?.trim().toLowerCase();
   if (!email) throw new Error("Isi --email.");
+  const password = generatePassword();
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     const user = await client.query<{ id: number }>(
-      `UPDATE users SET totp_enabled = FALSE, totp_secret_enc = NULL, totp_last_step = NULL,
-              failed_logins = 0, locked_until = NULL
+      `UPDATE users SET password_hash = $2, failed_logins = 0, locked_until = NULL, is_active = TRUE
         WHERE LOWER(email) = $1 RETURNING id`,
-      [email],
+      [email, await hashPassword(password)],
     );
     const id = user.rows[0]?.id;
     if (!id) throw new Error("Email tidak ditemukan.");
-    await client.query("DELETE FROM recovery_codes WHERE user_id = $1", [id]);
     await client.query("DELETE FROM user_sessions WHERE user_id = $1", [id]);
     await client.query(
-      "INSERT INTO audit_log (user_id, action, entity, entity_id, detail) VALUES (NULL, 'user_2fa_reset_cli', 'users', $1, '{}'::jsonb)",
+      "INSERT INTO audit_log (user_id, action, entity, entity_id, detail) VALUES (NULL, 'user_password_reset_cli', 'users', $1, '{}'::jsonb)",
       [id],
     );
     await client.query("COMMIT");
-    console.log(
-      `2FA akun ${email} dimatikan dan semua sesinya dicabut. Daftarkan 2FA lagi saat login.`,
-    );
+    console.log(`Kata sandi akun ${email} diganti dan semua sesinya dicabut.`);
+    console.log(`Kata sandi sementara (tampil sekali): ${password}`);
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

@@ -5,7 +5,7 @@ import {
   createTestUser,
   loginAs,
   resetDatabase,
-  verifiedSuperadmin,
+  loginSuperadmin,
 } from "./helpers.js";
 
 import assert from "node:assert/strict";
@@ -22,7 +22,7 @@ let adminId = 0;
 before(async () => {
   await resetDatabase();
   app = await buildApp();
-  admin = await verifiedSuperadmin(app, "admin@uji.id");
+  admin = await loginSuperadmin(app, "admin@uji.id");
   adminId = (await pool.query("SELECT id FROM users WHERE email = 'admin@uji.id'")).rows[0].id;
 });
 
@@ -202,7 +202,7 @@ describe("akun pengguna", () => {
     );
   });
 
-  it("cabut sesi dan reset 2FA", async () => {
+  it("cabut sesi", async () => {
     const created = await admin.request("POST", "/api/v1/admin/users", {
       name: "Dua",
       email: "dua@uji.id",
@@ -219,26 +219,6 @@ describe("akun pengguna", () => {
       200,
     );
     assert.equal((await client.request("GET", "/api/v1/auth/me")).status, 401);
-
-    await pool.query(
-      "UPDATE users SET totp_enabled = TRUE, totp_secret_enc = 'v1.x.y.z' WHERE id = $1",
-      [id],
-    );
-    await pool.query(
-      "INSERT INTO recovery_codes (user_id, code_hash) VALUES ($1, repeat('a', 64))",
-      [id],
-    );
-    assert.equal((await admin.request("POST", `/api/v1/admin/users/${id}/reset-2fa`)).status, 200);
-    const row = await pool.query("SELECT totp_enabled, totp_secret_enc FROM users WHERE id = $1", [
-      id,
-    ]);
-    assert.equal(row.rows[0].totp_enabled, false);
-    assert.equal(row.rows[0].totp_secret_enc, null);
-    assert.equal(
-      (await pool.query("SELECT 1 FROM recovery_codes WHERE user_id = $1", [id])).rowCount,
-      0,
-    );
-    assert.equal((await admin.request("POST", "/api/v1/admin/users/999999/reset-2fa")).status, 404);
   });
 
   it("log audit mencatat tindakan dan dapat dibaca superadmin (berpaginasi)", async () => {
@@ -255,7 +235,6 @@ describe("akun pengguna", () => {
       "user_reactivated",
       "user_password_reset",
       "user_sessions_revoked",
-      "user_2fa_reset",
     ]) {
       assert.ok(actions.includes(expected), `audit harus memuat ${expected}`);
     }

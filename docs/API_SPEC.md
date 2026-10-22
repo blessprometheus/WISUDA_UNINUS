@@ -27,9 +27,7 @@
 | Metode | Rute | Peran | Fungsi |
 |---|---|---|---|
 | GET | `/sanctum/csrf-cookie` | — | Terbitkan cookie CSRF |
-| POST | `/auth/login` | — | Email + password; bila 2FA aktif, minta kode TOTP |
-| POST | `/auth/2fa/verify` | — | Verifikasi TOTP / kode pemulihan |
-| POST | `/auth/2fa/setup` | S | Mulai pendaftaran 2FA (QR untuk aplikasi authenticator) + kode pemulihan |
+| POST | `/auth/login` | — | Email + password; langsung membuat sesi penuh (tanpa 2FA, D40) |
 | GET | `/auth/me` | semua | Profil sesi |
 | POST | `/auth/logout` | semua | Cabut sesi |
 
@@ -76,10 +74,10 @@
 |---|---|---|---|
 | GET / POST | `/admin/users` | S | Daftar / buat akun (kata sandi sementara acak, **tampil sekali**) |
 | POST | `/admin/users/:id/deactivate` , `/reactivate` | S | Nonaktifkan (mencabut sesi) / aktifkan. Tidak boleh menonaktifkan diri sendiri atau superadmin aktif terakhir |
-| POST | `/admin/users/:id/revoke-sessions` , `/reset-password` , `/reset-2fa` | S | Cabut semua sesi / sandi sementara baru (mencabut sesi) / matikan 2FA untuk pengguna yang kehilangan HP |
+| POST | `/admin/users/:id/revoke-sessions` , `/reset-password` | S | Cabut semua sesi / sandi sementara baru (mencabut sesi) |
 | GET | `/admin/audit-log` | S | Log audit berpaginasi |
 
-Akses darurat superadmin yang kehilangan HP dan kode pemulihan: `npm run admin:reset-2fa -- --email ...` (dijalankan di server oleh pemilik proyek).
+Akses darurat superadmin yang lupa kata sandi: `npm run admin:reset-password -- --email ...` (dijalankan di server oleh pemilik proyek; sandi acak tampil sekali, semua sesi dicabut).
 
 ### Timeline (diimplementasikan 15 Okt 2026)
 
@@ -95,7 +93,7 @@ Akses darurat superadmin yang kehilangan HP dan kode pemulihan: `npm run admin:r
 
 ## Tes wajib sebelum staging
 
-Otorisasi per peran (matriks di atas), CSRF, rate limit, pencegahan scan ganda paralel, impor idempoten (token stabil), impor NIM ganda, penguncian akun, 2FA, ekspor anti formula injection.
+Otorisasi per peran (matriks di atas), CSRF, rate limit, pencegahan scan ganda paralel, impor idempoten (token stabil), impor NIM ganda, penguncian akun, ekspor anti formula injection.
 
 
 ### Timeline — rute yang berlaku

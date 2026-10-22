@@ -1,7 +1,6 @@
 const PASS = process.env.E2E_PASSWORD;
 if (!PASS) throw new Error("E2E_PASSWORD wajib diisi (sandi akun uji palsu).");
 const { chromium } = require("playwright");
-const OTPAuth = require("otpauth");
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const out = process.argv[2];
@@ -20,20 +19,11 @@ const PSQL_ARGS = [
   "-c",
 ];
 const sql = (q) => execFileSync(PSQL, [...PSQL_ARGS, q], { stdio: "ignore" });
-const code = (secret, step = 0) =>
-  new OTPAuth.TOTP({
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: OTPAuth.Secret.fromBase32(secret),
-  }).generate({
-    timestamp: Date.now() + step * 30000,
-  });
 
 let lastPage = null;
 function resetState() {
   sql(
-    "TRUNCATE attendances, unregistered_entries, scan_logs RESTART IDENTITY; DELETE FROM recovery_codes; DELETE FROM user_sessions; UPDATE users SET totp_enabled=false, totp_secret_enc=NULL, totp_last_step=NULL, failed_logins=0, locked_until=NULL;",
+    "TRUNCATE attendances, unregistered_entries, scan_logs RESTART IDENTITY; DELETE FROM user_sessions; UPDATE users SET failed_logins=0, locked_until=NULL;",
   );
   sql(
     "UPDATE attendance_sessions SET is_active=TRUE, starts_at = GREATEST(date_trunc('day', NOW() AT TIME ZONE 'Asia/Jakarta') AT TIME ZONE 'Asia/Jakarta', NOW() - INTERVAL '1 hour'), ends_at = LEAST((date_trunc('day', NOW() AT TIME ZONE 'Asia/Jakarta') + INTERVAL '23 hours 59 minutes') AT TIME ZONE 'Asia/Jakarta', NOW() + INTERVAL '1 hour')",
@@ -153,7 +143,7 @@ function resetState() {
   console.log("10 keluar -> /masuk, sesi dicabut di server (me = 401)");
   await ctx.close();
 
-  // 11. Superadmin: wajib 2FA lewat antarmuka
+  // 11. Superadmin: langsung masuk ke /admin tanpa 2FA, keluar, lalu sandi salah ditolak
   const c2 = await browser.newContext({ viewport: { width: 1000, height: 900 } });
   const p2 = await c2.newPage();
   lastPage = p2;
@@ -161,33 +151,15 @@ function resetState() {
   await p2.getByLabel("Email").fill("super@uji.id");
   await p2.getByLabel("Kata sandi").fill(PASS);
   await p2.getByRole("button", { name: "Masuk" }).click();
-  await p2.getByRole("heading", { name: "Aktifkan verifikasi dua langkah" }).waitFor();
-  const secret = (await p2.locator("p span.font-mono").innerText()).trim();
-  await p2.screenshot({ path: `${out}/s-2fa-setup.png` });
-  await p2.getByLabel("Kode 6 digit").fill(code(secret));
-  await p2.getByRole("button", { name: "Aktifkan 2FA" }).click();
-  await p2.getByText("Simpan kode pemulihan ini sekarang").waitFor();
-  assert.equal(await p2.locator("ul.grid li").count(), 10);
-  await p2.screenshot({ path: `${out}/s-recovery.png` });
-  await p2.getByRole("button", { name: "Saya sudah menyimpan kodenya" }).click();
   await p2.waitForURL(/\/admin$/);
+  assert.equal(await p2.getByText(/dua langkah|authenticator|kode pemulihan/i).count(), 0);
   await p2.getByRole("button", { name: "Keluar" }).first().click();
   await p2.waitForURL(/\/masuk/);
-  await p2.getByLabel("Email").waitFor();
-  assert.ok(
-    !(await p2.locator("body").innerText()).includes("kode pemulihan"),
-    "kode pemulihan tidak boleh tersisa setelah keluar",
-  );
   await p2.getByLabel("Email").fill("super@uji.id");
-  await p2.getByLabel("Kata sandi").fill(PASS);
+  await p2.getByLabel("Kata sandi").fill("Salah-Sandi-999");
   await p2.getByRole("button", { name: "Masuk" }).click();
-  await p2.getByLabel("Kode verifikasi").fill("000000");
-  await p2.getByRole("button", { name: "Verifikasi" }).click();
-  await p2.getByText("Kode verifikasi salah").waitFor();
-  await p2.getByLabel("Kode verifikasi").fill(code(secret, 1));
-  await p2.getByRole("button", { name: "Verifikasi" }).click();
-  await p2.waitForURL(/\/admin$/);
-  console.log("11 superadmin: setup 2FA, 10 kode pemulihan, login ulang dengan kode");
+  await p2.getByText("Email atau kata sandi salah").waitFor();
+  console.log("11 superadmin: langsung ke /admin tanpa 2FA; sandi salah ditolak");
 
   console.log("kesalahan halaman:", errors.length ? errors : "tidak ada");
   await browser.close();

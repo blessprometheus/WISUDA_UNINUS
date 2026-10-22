@@ -24,7 +24,6 @@ interface UserRow {
   email: string;
   role: Role;
   is_active: boolean;
-  totp_enabled: boolean;
   created_at: string;
 }
 
@@ -124,9 +123,9 @@ export function Users() {
       <PageTitle title="Pengguna" />
       <div className="grid gap-6">
         <Notice kind="info">
-          Akun hanya dibuat di sini (tidak ada pendaftaran publik).{" "}
-          <strong>Superadmin wajib 2FA</strong> pada login pertama; peran lain opsional. Setelah
-          hari-H, nonaktifkan akun petugas.
+          Akun hanya dibuat di sini (tidak ada pendaftaran publik). Kata sandi sementara tampil
+          sekali setelah akun dibuat; serahkan lewat jalur aman. Setelah hari-H, nonaktifkan akun
+          petugas.
         </Notice>
         {secret && (
           <SecretBox
@@ -188,7 +187,7 @@ export function Users() {
           {list.error && <Notice kind="error">{list.error}</Notice>}
           {list.loading && <p>Memuat…</p>}
           {list.data && (
-            <Table head={["Nama", "Email", "Peran", "Status", "2FA", "Dibuat", "Aksi"]}>
+            <Table head={["Nama", "Email", "Peran", "Status", "Dibuat", "Aksi"]}>
               {list.data.map((u) => (
                 <tr key={u.id}>
                   <Td>{u.name}</Td>
@@ -199,13 +198,6 @@ export function Users() {
                       <Badge tone="green">Aktif</Badge>
                     ) : (
                       <Badge tone="red">Nonaktif</Badge>
-                    )}
-                  </Td>
-                  <Td>
-                    {u.totp_enabled ? (
-                      <Badge tone="green">Aktif</Badge>
-                    ) : (
-                      <Badge tone="gray">Belum</Badge>
                     )}
                   </Td>
                   <Td className="whitespace-nowrap">{when(u.created_at)}</Td>
@@ -270,22 +262,6 @@ export function Users() {
                       >
                         Cabut sesi
                       </button>
-                      {u.totp_enabled && (
-                        <button
-                          type="button"
-                          className={btnGhost}
-                          onClick={() =>
-                            act(
-                              u,
-                              "reset-2fa",
-                              `Matikan 2FA ${u.name}? Ia harus mendaftarkan ulang (untuk yang hilang HP).`,
-                              "2FA direset.",
-                            )
-                          }
-                        >
-                          Reset 2FA
-                        </button>
-                      )}
                     </span>
                   </Td>
                 </tr>

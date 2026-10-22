@@ -119,7 +119,6 @@ export type Role = "superadmin" | "petugas" | "koordinator" | "ketua";
 
 export interface Profile {
   user: { id: number; name: string; email: string; role: Role };
-  mfa: { verified: boolean; enabled: boolean; setup_required: boolean };
 }
 
 /** Hanya terima jalur internal untuk parameter `next` (cegah open redirect). */
