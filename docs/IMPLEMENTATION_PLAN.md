@@ -19,6 +19,7 @@
 | D7 | 14 Okt 2026 | **Revisi D1**: modul kehadiran QR (import data, cari NIM + unduh QR, sesi gladi & hari-H, scan, rekap) masuk R2; CMS konten dihapus; absensi manual sebagai cadangan | [ADR-0003](adr/0003-revisi-ruang-lingkup-modul-kehadiran.md) |
 | D8 | 14 Okt 2026 | Pengambilan QR cukup dengan NIM, dengan mitigasi wajib — risiko diterima pemilik proyek | [ADR-0004](adr/0004-pencarian-qr-cukup-dengan-nim.md) |
 | D9 | 14 Okt 2026 | Pemindaian: 4 scanner USB di 4 laptop petugas, halaman web online, tanpa PWA/offline; token QR acak pendek (lookup DB). Lokasi belum ditentukan. | [ADR-0005](adr/0005-pemindai-usb-di-laptop-online.md) |
+| D37 | 22 Okt 2026 | **Jadwal & lokasi final dari pemilik proyek**: gladi Rabu 9 Des 2026, wisuda Kamis 10 Des 2026 dua sesi (pagi, siang), The Trans Luxury Hotel (Jl. Gatot Subroto No. 289, Bandung). Menggantikan Sabtu 5 Des. Frontend diperbarui. **Dampak terbuka:** backend kehadiran membatasi satu sesi per tanggal (UNIQUE `event_date`), padahal hari-H punya 2 sesi; perlu keputusan sebelum data/hari-H (usulan: izinkan beberapa sesi per tanggal dengan satu aktif) | — |
 | D36 | 19 Okt 2026 | **Merevisi ADR-0010**: Claude boleh mengoperasikan aaPanel (situs, reverse proxy, database, SSL milik proyek ini) lewat sesi yang di-login pemilik proyek sendiri; tanpa sandi/URL token di chat atau repo; tetap dilarang menyentuh PKKMB/situs lain, firewall, akun, DNS; produksi tetap dengan "go" eksplisit. Pemilik proyek men-deploy langsung ke `wisuda.uninus.ac.id` tanpa staging | [ADR-0010](adr/0010-deploy-oleh-claude-dengan-batasan.md) |
 | D35 | 15 Okt 2026 | **2FA superadmin dapat dinonaktifkan** (permintaan pemilik proyek; merevisi D19 secara opsional): `REQUIRE_SUPERADMIN_2FA=0`, **default tetap wajib**; dimatikan di `.env.local` lokal. Pengembang tetap menyarankan wajib di produksi. 78 tes lulus | [ADR-0008](adr/0008-akun-peran-dan-autentikasi.md) |
 | D34 | 15 Okt 2026 | **Timeline selesai** (branch `feat/r2-timeline`): divisi, pekerjaan (status, tenggat), catatan progres, laporan untuk ketua (persentase, keterlambatan, catatan terbaru); koordinator terisolasi per divisi, **ketua hanya melihat**, superadmin mengelola divisi dan penugasan (banyak koordinator per divisi). `/timeline` di balik saklar STAF. 74 tes API lulus (perusakan isolasi divisi dan peran ketua terdeteksi); 8 skenario browser tiga peran lulus | [API_SPEC](API_SPEC.md) |
@@ -73,7 +74,7 @@ Setiap fase butuh persetujuan pemilik proyek sebelum lanjut. Karena R1 berjadwal
 
 ## Jadwal R2 (USULAN — belum dikonfirmasi pemilik proyek)
 
-Acuan: hari-H Sabtu 5 Des 2026; gladi ± Rabu 2 Des 2026 (perkiraan dari "± 3 hari sebelum hari-H"). Hari ini Rabu 14 Okt → ± 7 minggu sampai gladi.
+Acuan (dikonfirmasi 22 Okt 2026, D37): gladi resik **Rabu 9 Des 2026**, hari-H wisuda **Kamis 10 Des 2026** dua sesi (pagi dan siang) di The Trans Luxury Hotel Bandung. Sebelumnya Sabtu 5 Des (sementara).
 
 | Minggu | Kegiatan | Gate |
 |---|---|---|
@@ -84,9 +85,9 @@ Acuan: hari-H Sabtu 5 Des 2026; gladi ± Rabu 2 Des 2026 (perkiraan dari "± 3 h
 | ± 9–20 Nov | **Data final dari BAAK + retensi tertulis** | Sebelum import data asli ke produksi |
 | 21–27 Nov | Uji: simulasi scan skala penuh (4 scanner nyata, layar HP nyata), uji beban unduhan QR, uji restore backup, tinjauan keamanan, review kode | Persetujuan production |
 | 28 Nov–1 Des | **Buka unduhan QR untuk wisudawan**, **bekukan kode** (hanya perbaikan kritis), SOP cadangan manual dicetak | — |
-| ± 2 Des | **Gladi resik = uji lapangan pertama** (jaringan, scanner, antrean) | Evaluasi sebelum hari-H |
-| 5 Des | Hari-H | — |
-| Setelah 5 Des | R3: galeri, e-book, survei, arsip; penyempurnaan timeline | — |
+| 9 Des | **Gladi resik = uji lapangan pertama** (jaringan, scanner, antrean) | Evaluasi sebelum hari-H |
+| 10 Des | Hari-H (2 sesi: pagi, siang) | — |
+| Setelah 10 Des | R3: galeri, e-book, survei, arsip; penyempurnaan timeline | — |
 
 **Risiko jadwal:** satu pengembang untuk tiga rilis. Bila R1 atau timeline molor, kehadiran yang memakan waktu uji. Cadangan: absensi manual, dan fitur kehadiran **diprioritaskan di atas penyempurnaan timeline**.
 

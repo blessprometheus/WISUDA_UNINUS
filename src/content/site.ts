@@ -16,8 +16,13 @@ export const siteConfig = {
   /** Domain produksi; dipakai untuk metadataBase dan OG. */
   url: "https://wisuda.uninus.ac.id",
   description:
-    "Informasi resmi Wisuda ke-70 Universitas Islam Nusantara (UNINUS) Bandung, Sabtu 5 Desember 2026.",
-  eventDate: "Sabtu, 5 Desember 2026",
+    "Informasi resmi Wisuda ke-70 Universitas Islam Nusantara (UNINUS) Bandung, Kamis 10 Desember 2026 di The Trans Luxury Hotel, dua sesi (pagi dan siang).",
+  /** Hari wisuda (hari-H). Dikonfirmasi pemilik proyek 22 Okt 2026. */
+  eventDate: "Kamis, 10 Desember 2026",
+  rehearsalDate: "Rabu, 9 Desember 2026",
+  venue: "The Trans Luxury Hotel",
+  venueAddress:
+    "Jl. Gatot Subroto No. 289, Cibangkong, Kec. Batununggal, Kota Bandung, Jawa Barat 40273",
 } as const;
 
 export const archive69Links: readonly ArchiveLink[] = [

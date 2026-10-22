@@ -128,7 +128,12 @@ export function Hero() {
         <div className="flex flex-col items-start gap-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8 sm:gap-y-4">
           <div className="fade-up flex items-center gap-4" style={delay(0.75)}>
             <span aria-hidden="true" className="h-0.5 w-12 origin-left bg-gold" />
-            <p className="text-[clamp(17px,2.4vw,26px)] font-semibold">{siteConfig.eventDate}</p>
+            <div>
+              <p className="text-[clamp(17px,2.4vw,26px)] font-semibold">{siteConfig.eventDate}</p>
+              <p className="mt-1 text-[15px] text-white/80">
+                {siteConfig.venue}, Bandung · dua sesi: pagi dan siang
+              </p>
+            </div>
           </div>
           <div
             className="fade-up flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap"

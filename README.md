@@ -1,6 +1,6 @@
 # Website Wisuda UNINUS 2026 (Wisuda ke-70)
 
-Website resmi Wisuda ke-70 Universitas Islam Nusantara (Sabtu, 5 Desember 2026).
+Website resmi Wisuda ke-70 Universitas Islam Nusantara (wisuda Kamis, 10 Desember 2026; gladi Rabu, 9 Desember 2026; The Trans Luxury Hotel, Bandung).
 
 > **Status:** Phase 3 — setup project. Rilis R1 (halaman informasi) sedang disiapkan.
 > Aturan kerja: [AGENTS.md](AGENTS.md). Keputusan dan rencana: [docs/](docs/IMPLEMENTATION_PLAN.md).

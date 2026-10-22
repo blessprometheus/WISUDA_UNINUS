@@ -89,7 +89,7 @@ Belum ada fitur berstatus *Out of scope* — akan diisi bila ada yang ditolak se
 | **R1** | Minggu 19–25 Oktober 2026 (tanggal ditetapkan rektorat, **tidak dapat digeser**; tanggal pasti *Pending*) | Satu halaman informatif Wisuda ke-70, konten statis dari surat edaran, arah visual awal yang disetujui |
 | **R2a** | ± 26 Okt–1 Nov 2026 | Database + auth + **timeline minimal** (D14, D15) |
 | **R2b** | Siap di staging ± 20 Nov; QR dibuka ± 28 Nov; **sebelum gladi (± 2 Des, perkiraan)** | Modul kehadiran QR (D7) + portal informasi lengkap; tanpa CMS |
-| **R3** | Setelah 5 Desember 2026 | Mode pasca-acara: galeri, e-book, survei + arsip lintas tahun |
+| **R3** | Setelah 10 Desember 2026 | Mode pasca-acara: galeri, e-book, survei + arsip lintas tahun |
 
 ## 6. Acceptance criteria R1 (draft)
 
@@ -111,7 +111,7 @@ Belum ada fitur berstatus *Out of scope* — akan diisi bila ada yang ditolak se
 | Pemindahan domain gagal | Situs tidak dapat diakses saat launching | Ganti DNS saja, server lama tetap hidup ≥ 2 minggu (ADR-0002) |
 | Repo di akun GitHub pribadi | Akses kode hilang bila pemilik tidak aktif | Pindah ke organisasi UNINUS sebelum serah terima |
 | Foto hosting di Google Drive | Embed gagal, link rusak | Strategi penyimpanan media dibahas sebelum R3 |
-| Lonjakan trafik hari-H | Situs lambat/down | Halaman di-render statis/di-cache; uji beban sebelum 5 Des (*Pending*) |
+| Lonjakan trafik hari-H | Situs lambat/down | Halaman di-render statis/di-cache; uji beban sebelum 9 Des (*Pending*) |
 | Hak pakai foto pihak ketiga | Masalah hukum | Pemilik proyek menyatakan foto boleh dipakai; catat sumber per foto |
 | Data mahasiswa asli pernah berada di Google Sheet yang dapat dibaca publik | Paparan data pribadi | Pemilik proyek diminta mengubah akses ke Restricted; data asli tidak dipakai untuk dev/test |
 | QR dapat diambil orang lain lewat tebakan NIM (ADR-0004) | Absensi gladi bisa dititipkan; daftar wisudawan bisa dikumpulkan | Token QR bertanda tangan, rate limiting, petugas mencocokkan nama di layar pemindai |

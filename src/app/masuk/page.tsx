@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { LoginFlow } from "@/components/staff/LoginFlow";
-import { staffEnabled } from "@/content/site";
+import { siteConfig, staffEnabled } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Masuk Petugas",
@@ -88,7 +88,7 @@ export default function MasukPage() {
 
         <div className="relative z-10 hidden items-center gap-4 text-[14px] text-mist-dim lg:flex">
           <span aria-hidden="true" className="h-0.5 w-10 bg-gold" />
-          Sabtu, 5 Desember 2026
+          {siteConfig.eventDate}
         </div>
 
         <p className="relative z-10 mt-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-gold lg:hidden">

@@ -93,7 +93,7 @@ let lastPage = null;
   const form = page.locator("form").first();
   await form.getByLabel("Jenis").selectOption("hari_h");
   await form.getByLabel("Nama sesi").fill("Hari-H Wisuda");
-  await form.getByLabel("Tanggal (WIB)").fill("2026-12-05");
+  await form.getByLabel("Tanggal (WIB)").fill("2026-12-10");
   await form.getByLabel("Jam mulai scan QR").fill("06:30");
   await form.getByLabel("Jam akhir scan QR").fill("12:00");
   await form.getByRole("button", { name: "Buat sesi" }).click();

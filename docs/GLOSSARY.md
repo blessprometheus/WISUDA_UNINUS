@@ -6,7 +6,7 @@ Bahasa bersama untuk kode, dokumen, dan diskusi. Bila sebuah istilah dipakai di 
 |---|---|---|---|
 | **Wisuda ke-N** | `Ceremony` (`number`) | Satu penyelenggaraan wisuda dengan nomor urut. Wisuda 2026 = **ke-70**. | Fakta |
 | **Gelombang** | `Session` / `wave` | Pembagian pelaksanaan dalam satu Wisuda ke-N (situs ke-69 mengelompokkan galeri per gelombang). Wisuda ke-70 sementara **satu gelombang**. | Fakta; nama kode belum final |
-| **Hari-H** | — | Tanggal pelaksanaan gelombang. Ke-70: **Sabtu, 5 Desember 2026** (sementara). | Fakta (dapat berubah) |
+| **Hari-H** | — | Tanggal pelaksanaan gelombang. Ke-70: **Kamis, 10 Desember 2026**, dua sesi (pagi dan siang), di The Trans Luxury Hotel Bandung; gladi resik **Rabu, 9 Desember 2026**. Dikonfirmasi pemilik proyek 22 Okt 2026 (menggantikan Sabtu 5 Desember). | Fakta |
 | **Wisudawan** | `Graduate` | Mahasiswa yang diwisuda. **Datanya tidak diproses di MVP** (lihat PRD). | Fakta |
 | **Panitia** | `Admin` | Pengelola konten situs. Satu-satunya pengguna yang login di MVP. | Asumsi — peran & hak akses belum dibahas |
 | **Surat edaran** | — | Dokumen resmi panitia; sumber satu-satunya untuk detail acara (lokasi, jadwal, syarat, biaya). Konten situs tidak boleh menebak di luar dokumen ini. | Fakta |
