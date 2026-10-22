@@ -21,12 +21,7 @@ export default function Arsip69Page() {
       <main id="konten" className={styles.page}>
         <div className={styles.container}>
           <div className={styles.pageIntro}>
-            <p className={styles.eyebrow}>Dokumentasi</p>
             <h1 className={styles.heading}>Arsip Wisuda ke-69</h1>
-            <p className={styles.description}>
-              Temukan tautan galeri foto, buku kenangan, dan survei dari Wisuda ke-69. Arsip yang
-              belum dipublikasikan ditandai dengan jelas.
-            </p>
           </div>
           <ArchiveList />
         </div>

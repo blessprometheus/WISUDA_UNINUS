@@ -5,7 +5,7 @@
 }
 
 .section {
-  padding-block: clamp(4rem, 8vw, 7rem);
+  padding-block: clamp(3.5rem, 7vw, 6rem);
 }
 
 .page {
@@ -19,36 +19,11 @@
 }
 
 .intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(17rem, 0.85fr);
-  align-items: end;
-  gap: 2rem 4rem;
-  margin-bottom: clamp(2rem, 4vw, 3rem);
+  margin-bottom: clamp(1.75rem, 3vw, 2.5rem);
 }
 
 .pageIntro {
-  max-width: 48rem;
-  margin-bottom: clamp(2.2rem, 5vw, 3.5rem);
-}
-
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin: 0 0 1.1rem;
-  color: #0a5c3a;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.eyebrow::before {
-  width: 1.8rem;
-  height: 2px;
-  flex: none;
-  background: #d8a700;
-  content: "";
+  margin-bottom: clamp(2rem, 4vw, 3rem);
 }
 
 .heading {
@@ -59,18 +34,6 @@
   letter-spacing: -0.055em;
   line-height: 1.08;
   text-wrap: balance;
-}
-
-.description {
-  max-width: 47ch;
-  margin: 0;
-  color: #486156;
-  font-size: clamp(1rem, 1.3vw, 1.12rem);
-  line-height: 1.7;
-}
-
-.pageIntro .description {
-  margin-top: 1.2rem;
 }
 
 .list {
@@ -106,7 +69,7 @@
 }
 
 .featured {
-  min-height: clamp(18rem, 30vw, 24rem);
+  min-height: clamp(17rem, 26vw, 21rem);
   padding: clamp(1.4rem, 3vw, 2.25rem);
   background:
     linear-gradient(180deg, rgba(4, 26, 17, 0.03) 12%, rgba(4, 26, 17, 0.54) 100%),
@@ -128,19 +91,6 @@
   transform: rotate(-10deg);
 }
 
-.featuredNumber {
-  position: absolute;
-  top: 0.75rem;
-  right: 1.5rem;
-  color: rgba(255, 255, 255, 0.12);
-  font-size: clamp(9rem, 26vw, 20rem);
-  font-weight: 800;
-  letter-spacing: -0.12em;
-  line-height: 0.8;
-  pointer-events: none;
-  user-select: none;
-}
-
 .cardTop,
 .cardBottom {
   position: relative;
@@ -153,20 +103,11 @@
 
 .cardTop {
   align-items: center;
+  justify-content: flex-end;
 }
 
 .cardBottom {
   align-items: flex-end;
-}
-
-.cardIndex {
-  font-size: 0.77rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-}
-
-.featured .cardIndex {
-  color: #ffe08a;
 }
 
 .cardStatus {
@@ -188,13 +129,6 @@
   color: #fff;
 }
 
-.cardCopy {
-  display: grid;
-  min-width: 0;
-  max-width: 43rem;
-  gap: 0.45rem;
-}
-
 .cardTitle {
   font-size: clamp(1.8rem, 3vw, 2.6rem);
   font-weight: 800;
@@ -202,31 +136,12 @@
   line-height: 1.15;
 }
 
-.cardDescription,
-.featuredNote {
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.featured .cardDescription {
-  color: rgba(255, 255, 255, 0.88);
-}
-
-.featuredNote {
-  margin-top: 0.4rem;
-  color: #ffe08a;
-}
-
 .secondary {
-  min-height: 12.5rem;
+  min-height: 10rem;
   padding: clamp(1.2rem, 2vw, 1.65rem);
   border: 1px solid rgba(10, 92, 58, 0.16);
   background: #fff;
   color: #062a1c;
-}
-
-.secondary .cardIndex {
-  color: #0a5c3a;
 }
 
 .secondary .cardStatus {
@@ -237,10 +152,6 @@
 
 .secondary .cardTitle {
   font-size: clamp(1.4rem, 2vw, 1.75rem);
-}
-
-.secondary .cardDescription {
-  color: #486156;
 }
 
 .arrowBox {
@@ -291,21 +202,16 @@
 }
 
 @media (max-width: 43rem) {
-  .intro {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
-  }
-
   .list {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .featured {
-    min-height: 20rem;
+    min-height: 15rem;
   }
 
   .secondary {
-    min-height: 11rem;
+    min-height: 8.5rem;
   }
 
   .cardTitle {
@@ -316,10 +222,6 @@
 @media (max-width: 23rem) {
   .container {
     width: calc(100% - 2rem);
-  }
-
-  .featuredNumber {
-    right: 0.7rem;
   }
 }
 

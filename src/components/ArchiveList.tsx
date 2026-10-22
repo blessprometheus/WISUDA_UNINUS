@@ -32,30 +32,11 @@ export function ArchiveList() {
         ].join(" ");
         const content = (
           <>
-            {featured ? (
-              <span className={styles.featuredNumber} aria-hidden="true">
-                69
-              </span>
-            ) : null}
             <span className={styles.cardTop}>
-              <span className={styles.cardIndex}>
-                {String(index + 1).padStart(2, "0")} /{" "}
-                {String(archive69Links.length).padStart(2, "0")}
-              </span>
-              <span className={styles.cardStatus}>
-                {link.href ? "Tersedia" : "Menunggu publikasi"}
-              </span>
+              <span className={styles.cardStatus}>{link.href ? "Tersedia" : "Belum tersedia"}</span>
             </span>
             <span className={styles.cardBottom}>
-              <span className={styles.cardCopy}>
-                <strong className={styles.cardTitle}>{link.label}</strong>
-                <span className={styles.cardDescription}>{link.description}</span>
-                {!link.href && featured ? (
-                  <span className={styles.featuredNote}>
-                    Foto resmi akan ditampilkan setelah tautan galeri diumumkan.
-                  </span>
-                ) : null}
-              </span>
+              <strong className={styles.cardTitle}>{link.label}</strong>
               {link.href ? (
                 <span className={styles.arrowBox}>
                   <ArrowIcon />
