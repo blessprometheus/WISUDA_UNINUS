@@ -32,7 +32,8 @@ export const archive69Links: readonly ArchiveLink[] = [
   },
   {
     label: "E-Book Wisuda",
-    href: null,
+    // PDF ± 49 MB di Wasabi (dikonfirmasi pemilik proyek 23 Okt 2026; dicek: 200, application/pdf).
+    href: "https://s3.ap-southeast-1.wasabisys.com/unicloud/cms/posts/SskFTiYEF4B0MxMr69drXADRwdzSZcaANbs9rHD0.pdf",
   },
   {
     label: "Survei Kepuasan",

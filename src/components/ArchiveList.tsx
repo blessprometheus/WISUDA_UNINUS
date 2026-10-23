@@ -49,7 +49,7 @@ export function ArchiveList() {
         return (
           <li className={featured ? styles.featuredItem : styles.secondaryItem} key={link.label}>
             {link.href ? (
-              <a className={cardClass} href={link.href} rel="noopener noreferrer">
+              <a className={cardClass} href={link.href} target="_blank" rel="noopener noreferrer">
                 {content}
               </a>
             ) : (
