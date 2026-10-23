@@ -33,6 +33,8 @@ export function TimelineSummary() {
         )
         .slice(0, 5)
     : [];
+  // Judul jujur: "Perlu perhatian" hanya bila memang ada yang terlambat atau belum selesai.
+  const needsAttention = attention.some((v) => v.terlambat > 0 || v.selesai < v.total);
 
   return (
     <Card>
@@ -81,7 +83,7 @@ export function TimelineSummary() {
           </div>
           <div>
             <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-muted">
-              Perlu perhatian
+              {needsAttention ? "Perlu perhatian" : "Progres per divisi"}
             </p>
             <ul className="grid gap-3">
               {attention.map((v) => (
