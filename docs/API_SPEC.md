@@ -83,11 +83,11 @@ Akses darurat superadmin yang lupa kata sandi: `npm run admin:reset-password -- 
 
 | Metode | Rute | Peran | Fungsi |
 |---|---|---|---|
-| GET | `/timeline/divisions` | K (miliknya), T,S (semua) | Daftar divisi |
-| GET | `/timeline/tasks?division_id` | K (miliknya), T,S | Daftar pekerjaan |
+| GET | `/timeline/divisions` | K, T, S (semua divisi; `mine` = boleh diubah, D46) | Daftar divisi |
+| GET | `/timeline/tasks?division_id` | K (divisi mana pun, hanya lihat), T, S | Daftar pekerjaan (judul, status, tenggat, jumlah catatan) |
 | POST/PUT | `/timeline/tasks` , `/timeline/tasks/:id` | K (divisi miliknya), S | Buat/ubah pekerjaan (status, tenggat) |
 | POST | `/timeline/tasks/:id/notes` | K (miliknya), S | Tambah catatan progres |
-| GET | `/timeline/report` | T, S | Ringkasan progres per divisi |
+| GET | `/timeline/report` | K, T, S | Beranda: ringkasan progres semua divisi; isi catatan terbaru milik divisi sendiri untuk K (D46) |
 
 **K dan T tidak dapat memanggil endpoint `/admin/*`, `/scan/*`, atau `/lookup` data wisudawan** — diuji otomatis (tes otorisasi per peran).
 
@@ -100,11 +100,12 @@ Otorisasi per peran (matriks di atas), CSRF, rate limit, pencegahan scan ganda p
 
 | Metode | Rute | Peran |
 |---|---|---|
-| GET | `/timeline/divisions` | S, T (semua divisi); K (divisinya) |
-| GET | `/timeline/tasks?division_id` , `/timeline/tasks/:id/notes` | S, T; K (divisinya) |
+| GET | `/timeline/divisions` | S, T, K (semua divisi; K melihat penanda `mine` untuk divisinya) |
+| GET | `/timeline/tasks?division_id` | S, T, K (semua divisi, hanya lihat untuk K di divisi lain) |
+| GET | `/timeline/tasks/:id/notes` | S, T; K (hanya divisinya) |
 | POST / PUT | `/timeline/tasks` , `/timeline/tasks/:id` , `POST /timeline/tasks/:id/notes` | S; K (divisinya). **T tidak boleh menulis** |
 | POST | `/timeline/tasks/:id/delete` | S |
-| GET | `/timeline/report` | S, T |
+| GET | `/timeline/report` | S, T, K (K: catatan terbaru hanya divisinya) |
 | GET / POST | `/admin/divisions` , `/admin/divisions/:id/members` , `.../members/:userId/remove` | S (hanya pengguna berperan koordinator yang dapat ditugaskan; satu divisi boleh beberapa koordinator) |
 
 Koordinator yang mengakses divisi lain mendapat 403. Pemisahan ini diuji otomatis (termasuk perusakan sengaja pada pengaman isolasi dan peran ketua).

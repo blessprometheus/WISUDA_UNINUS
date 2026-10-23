@@ -14,7 +14,14 @@ type Status = (typeof STATUSES)[number];
 
 const TODAY_WIB = "(NOW() AT TIME ZONE 'Asia/Jakarta')::date";
 
-/** Superadmin dan ketua melihat semua divisi; koordinator hanya divisi yang ditugaskan padanya. */
+/** Ekspresi "divisi ini boleh diubah pemakai": superadmin ($1) atau koordinator yang ditugaskan ($2 = id pemakai). */
+const MINE =
+  "($1::boolean OR EXISTS (SELECT 1 FROM user_divisions ud WHERE ud.division_id = d.id AND ud.user_id = $2))";
+
+/**
+ * Menulis dan membaca ISI catatan: superadmin dan ketua semua divisi; koordinator hanya divisi yang ditugaskan padanya.
+ * (Daftar pekerjaan dan laporan progres dapat dibaca semua peran pembaca, lihat D46.)
+ */
 async function canSeeDivision(auth: AuthContext, divisionId: number): Promise<boolean> {
   if (auth.user.role !== "koordinator") return true;
   const result = await pool.query(
@@ -75,7 +82,7 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
   app.get("/api/v1/timeline/divisions", async (request, reply) => {
     const auth = await requireAuth(request, reply, READ_ROLES);
     if (!auth) return reply;
-    const scoped = auth.user.role === "koordinator";
+    // Semua peran pembaca melihat semua divisi (D46); `mine` menandai divisi yang boleh ia ubah.
     const result = await pool.query(
       `SELECT d.id, d.name,
               COUNT(t.id)::int AS total,
@@ -83,12 +90,12 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
               COUNT(t.id) FILTER (WHERE t.status = 'berjalan')::int AS berjalan,
               COUNT(t.id) FILTER (WHERE t.status = 'tertunda')::int AS tertunda,
               COUNT(t.id) FILTER (WHERE t.status = 'belum')::int AS belum,
-              COUNT(t.id) FILTER (WHERE t.status <> 'selesai' AND t.due_date < ${TODAY_WIB})::int AS terlambat
+              COUNT(t.id) FILTER (WHERE t.status <> 'selesai' AND t.due_date < ${TODAY_WIB})::int AS terlambat,
+              ${MINE} AS mine
          FROM divisions d
          LEFT JOIN tasks t ON t.division_id = d.id
-        WHERE (NOT $1 OR d.id IN (SELECT division_id FROM user_divisions WHERE user_id = $2))
         GROUP BY d.id ORDER BY d.name`,
-      [scoped, auth.user.id],
+      [auth.user.role === "superadmin", auth.user.id],
     );
     return ok(reply, result.rows);
   });
@@ -96,8 +103,10 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
   // ---------- Pekerjaan ----------
   app.get("/api/v1/timeline/tasks", async (request, reply) => {
     const divisionId = positiveId(query(request).division_id);
-    const auth = await guardDivision(request, reply, READ_ROLES, divisionId, false);
+    // Daftar pekerjaan (judul, status, tenggat, jumlah catatan) dapat dilihat semua peran pembaca (D46).
+    const auth = await requireAuth(request, reply, READ_ROLES);
     if (!auth) return reply;
+    if (!divisionId) return fail(reply, 422, "Divisi tidak valid.");
     const result = await pool.query(
       `SELECT t.id, t.division_id, t.title, t.status, to_char(t.due_date, 'YYYY-MM-DD') AS due_date,
               (t.status <> 'selesai' AND t.due_date < ${TODAY_WIB}) AS overdue,
@@ -194,13 +203,15 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
     return ok(reply.code(201), { id: result.rows[0]!.id });
   });
 
-  // ---------- Laporan untuk ketua ----------
+  // ---------- Laporan progres (beranda): semua peran pembaca, termasuk koordinator (D46) ----------
   app.get("/api/v1/timeline/report", async (request, reply) => {
-    const auth = await requireAuth(request, reply, ["superadmin", "ketua"]);
+    const auth = await requireAuth(request, reply, READ_ROLES);
     if (!auth) return reply;
+    // Isi catatan progres: koordinator hanya melihat catatan divisinya sendiri.
+    const seesAllNotes = auth.user.role !== "koordinator";
     const [divisions, totals, recent] = await Promise.all([
       pool.query(
-        `SELECT d.id, d.name,
+        `SELECT d.id, d.name, ${MINE} AS mine,
                 COUNT(t.id)::int AS total,
                 COUNT(t.id) FILTER (WHERE t.status = 'selesai')::int AS selesai,
                 COUNT(t.id) FILTER (WHERE t.status = 'berjalan')::int AS berjalan,
@@ -209,6 +220,7 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
                 COUNT(t.id) FILTER (WHERE t.status <> 'selesai' AND t.due_date < ${TODAY_WIB})::int AS terlambat,
                 to_char(MIN(t.due_date) FILTER (WHERE t.status <> 'selesai'), 'YYYY-MM-DD') AS tenggat_terdekat
            FROM divisions d LEFT JOIN tasks t ON t.division_id = d.id GROUP BY d.id ORDER BY d.name`,
+        [auth.user.role === "superadmin", auth.user.id],
       ),
       pool.query<{ total: number; selesai: number; terlambat: number }>(
         `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE status = 'selesai')::int AS selesai,
@@ -217,7 +229,10 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
       pool.query(
         `SELECT n.id, n.note, n.created_at, u.name AS author, t.title AS task_title, d.name AS division
            FROM task_notes n JOIN tasks t ON t.id = n.task_id JOIN divisions d ON d.id = t.division_id
-           JOIN users u ON u.id = n.author_id ORDER BY n.id DESC LIMIT 10`,
+           JOIN users u ON u.id = n.author_id
+          WHERE ($1::boolean OR t.division_id IN (SELECT division_id FROM user_divisions WHERE user_id = $2))
+          ORDER BY n.id DESC LIMIT 10`,
+        [seesAllNotes, auth.user.id],
       ),
     ]);
     return ok(reply, {

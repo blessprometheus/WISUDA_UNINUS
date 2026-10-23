@@ -29,6 +29,8 @@ interface Division {
   tertunda: number;
   belum: number;
   terlambat: number;
+  /** Divisi yang boleh diubah pemakai ini (koordinator yang ditugaskan, atau superadmin). */
+  mine: boolean;
 }
 interface ReportDivision extends Division {
   tenggat_terdekat: string | null;
@@ -153,10 +155,13 @@ function Notes({
 function TaskRow({
   task,
   canWrite,
+  canReadNotes,
   onChanged,
 }: {
   task: Task;
   canWrite: boolean;
+  /** Isi catatan hanya untuk divisinya sendiri (koordinator), atau semua divisi (ketua, superadmin). */
+  canReadNotes: boolean;
   onChanged: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -193,9 +198,13 @@ function TaskRow({
         </Td>
         <Td>
           <span className="flex flex-wrap gap-2">
-            <button type="button" className={btnGhost} onClick={() => setOpen((v) => !v)}>
-              Catatan ({task.note_count})
-            </button>
+            {canReadNotes ? (
+              <button type="button" className={btnGhost} onClick={() => setOpen((v) => !v)}>
+                Catatan ({task.note_count})
+              </button>
+            ) : (
+              <span className="text-[13px] text-ink-muted">{task.note_count} catatan</span>
+            )}
             {canWrite && (
               <button type="button" className={btnGhost} onClick={() => setEditing((v) => !v)}>
                 {editing ? "Batal" : "Ubah"}
@@ -266,10 +275,18 @@ function TaskRow({
 }
 
 function Tasks({ role, initialDivision }: { role: Role; initialDivision: number | null }) {
-  const canWrite = role !== "ketua";
   const divisions = useLoad<Division[]>("/api/v1/timeline/divisions");
   const [chosen, setChosen] = useState<number | null>(initialDivision);
-  const divisionId = chosen ?? divisions.data?.[0]?.id ?? null;
+  // Bawaan: divisi milik pemakai bila ada (koordinator), selain itu yang pertama.
+  const divisionId =
+    chosen ??
+    divisions.data?.find((d) => d.mine && role === "koordinator")?.id ??
+    divisions.data?.[0]?.id ??
+    null;
+  const current = divisions.data?.find((d) => d.id === divisionId) ?? null;
+  // Server tetap menegakkan ini: koordinator hanya menulis di divisinya; ketua tidak menulis.
+  const canWrite = role !== "ketua" && (current?.mine ?? false);
+  const canReadNotes = role !== "koordinator" || (current?.mine ?? false);
   const tasks = useLoad<Task[]>(
     divisionId ? `/api/v1/timeline/tasks?division_id=${divisionId}` : null,
   );
@@ -318,12 +335,18 @@ function Tasks({ role, initialDivision }: { role: Role; initialDivision: number 
           >
             {divisions.data?.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.name} ({d.selesai}/{d.total} selesai)
+                {d.name}
+                {d.mine && role === "koordinator" ? " (divisi Anda)" : ""} ({d.selesai}/{d.total}{" "}
+                selesai)
               </option>
             ))}
           </select>
         </Field>
-        {!canWrite && <Badge tone="gray">Hanya lihat</Badge>}
+        {!canWrite && (
+          <Badge tone="gray">
+            {role === "koordinator" ? "Hanya lihat (divisi lain)" : "Hanya lihat"}
+          </Badge>
+        )}
       </div>
 
       {canWrite && divisionId && (
@@ -385,6 +408,7 @@ function Tasks({ role, initialDivision }: { role: Role; initialDivision: number 
                 key={t.id}
                 task={t}
                 canWrite={canWrite}
+                canReadNotes={canReadNotes}
                 onChanged={() => {
                   tasks.reload();
                   divisions.reload();
@@ -406,7 +430,7 @@ function Tasks({ role, initialDivision }: { role: Role; initialDivision: number 
   );
 }
 
-function ReportView({ onOpen }: { onOpen: (divisionId: number) => void }) {
+function ReportView({ role, onOpen }: { role: Role; onOpen: (divisionId: number) => void }) {
   const report = useLoad<Report>("/api/v1/timeline/report");
   const d = report.data;
   if (report.loading) return <p>Memuat…</p>;
@@ -414,6 +438,12 @@ function ReportView({ onOpen }: { onOpen: (divisionId: number) => void }) {
   if (!d) return null;
   return (
     <div className="grid gap-6">
+      {role === "koordinator" && (
+        <Notice kind="info">
+          Beranda ini menampilkan progres <strong>semua divisi</strong>. Anda hanya dapat mengubah
+          pekerjaan di divisi Anda sendiri; divisi lain hanya dapat dilihat.
+        </Notice>
+      )}
       <Card title="Ringkasan keseluruhan">
         <Progress done={d.totals.selesai} total={d.totals.total} />
         <p className="mt-3 text-[15px]">
@@ -428,7 +458,10 @@ function ReportView({ onOpen }: { onOpen: (divisionId: number) => void }) {
       </Card>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {d.divisions.map((v) => (
-          <Card key={v.id} title={v.name}>
+          <Card
+            key={v.id}
+            title={role === "koordinator" && v.mine ? `${v.name} · divisi Anda` : v.name}
+          >
             <Progress done={v.selesai} total={v.total} />
             <p className="mt-3 flex flex-wrap gap-1.5 text-[13px]">
               <Badge tone="green">{v.selesai} selesai</Badge>
@@ -447,7 +480,13 @@ function ReportView({ onOpen }: { onOpen: (divisionId: number) => void }) {
         ))}
         {d.divisions.length === 0 && <Notice kind="info">Belum ada divisi.</Notice>}
       </div>
-      <Card title="Catatan progres terbaru">
+      <Card
+        title={
+          role === "koordinator"
+            ? "Catatan progres terbaru (divisi Anda)"
+            : "Catatan progres terbaru"
+        }
+      >
         {d.recent_notes.length === 0 && <p className="text-ink-muted">Belum ada catatan.</p>}
         <ul className="divide-y divide-forest-900/10">
           {d.recent_notes.map((n) => (
@@ -465,24 +504,22 @@ function ReportView({ onOpen }: { onOpen: (divisionId: number) => void }) {
 }
 
 export function Timeline({ role }: { role: Role }) {
-  const hasReport = role === "ketua" || role === "superadmin";
-  const [tab, setTab] = useState<"laporan" | "pekerjaan">(hasReport ? "laporan" : "pekerjaan");
+  // Beranda (laporan progres semua divisi) dapat dilihat semua peran timeline, termasuk koordinator (D46).
+  const [tab, setTab] = useState<"laporan" | "pekerjaan">("laporan");
   const [division, setDivision] = useState<number | null>(null);
 
   return (
     <div className="grid gap-6">
       <div role="tablist" aria-label="Tampilan timeline" className="flex gap-2">
-        {hasReport && (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "laporan"}
-            onClick={() => setTab("laporan")}
-            className={tab === "laporan" ? btnPrimary : btnGhost}
-          >
-            Laporan progres
-          </button>
-        )}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "laporan"}
+          onClick={() => setTab("laporan")}
+          className={tab === "laporan" ? btnPrimary : btnGhost}
+        >
+          Beranda · progres semua divisi
+        </button>
         <button
           type="button"
           role="tab"
@@ -495,6 +532,7 @@ export function Timeline({ role }: { role: Role }) {
       </div>
       {tab === "laporan" ? (
         <ReportView
+          role={role}
           onOpen={(id) => {
             setDivision(id);
             setTab("pekerjaan");

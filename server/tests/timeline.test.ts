@@ -120,26 +120,44 @@ describe("divisi dan penugasan", () => {
     );
   });
 
-  it("koordinator melihat divisinya saja; ketua dan superadmin melihat semua", async () => {
-    const own = await koorA.request("GET", "/api/v1/timeline/divisions");
+  it("semua peran pembaca melihat semua divisi; `mine` menandai divisi yang boleh diubah (D46)", async () => {
+    const asA = await koorA.request("GET", "/api/v1/timeline/divisions");
     assert.deepEqual(
-      own.json.data.map((d: { name: string }) => d.name),
-      ["Acara"],
+      asA.json.data.map((d: { name: string; mine: boolean }) => [d.name, d.mine]),
+      [
+        ["Acara", true],
+        ["Konsumsi", false],
+      ],
     );
-    for (const client of [ketua, admin]) {
-      const all = await client.request("GET", "/api/v1/timeline/divisions");
-      assert.equal(all.json.data.length, 2);
-    }
+    const asB = await koorB.request("GET", "/api/v1/timeline/divisions");
+    assert.deepEqual(
+      asB.json.data.map((d: { name: string; mine: boolean }) => [d.name, d.mine]),
+      [
+        ["Acara", false],
+        ["Konsumsi", true],
+      ],
+    );
+    const asKetua = await ketua.request("GET", "/api/v1/timeline/divisions");
+    assert.deepEqual(
+      asKetua.json.data.map((d: { mine: boolean }) => d.mine),
+      [false, false],
+      "ketua hanya melihat",
+    );
+    const asAdmin = await admin.request("GET", "/api/v1/timeline/divisions");
+    assert.deepEqual(
+      asAdmin.json.data.map((d: { mine: boolean }) => d.mine),
+      [true, true],
+    );
     assert.equal((await petugas.request("GET", "/api/v1/timeline/divisions")).status, 403);
   });
 });
 
 describe("isolasi antar-koordinator", () => {
-  it("koordinator tidak dapat membaca, membuat, mengubah, atau mencatat pada divisi lain", async () => {
-    assert.equal(
-      (await koorA.request("GET", `/api/v1/timeline/tasks?division_id=${divB}`)).status,
-      403,
-    );
+  it("koordinator dapat MELIHAT daftar pekerjaan divisi lain, tetapi tidak membuat, mengubah, mencatat, atau membaca isi catatannya", async () => {
+    const otherTasks = await koorA.request("GET", `/api/v1/timeline/tasks?division_id=${divB}`);
+    assert.equal(otherTasks.status, 200);
+    assert.equal(otherTasks.json.data.length, 1);
+    assert.equal(otherTasks.json.data[0].title, "Pesan konsumsi");
     assert.equal(
       (
         await koorA.request("POST", "/api/v1/timeline/tasks", {
@@ -280,11 +298,28 @@ describe("pekerjaan, catatan, dan laporan", () => {
     assert.equal(acara.terlambat, 1);
     assert.equal(recent_notes.length, 1);
     assert.equal(recent_notes[0].division, "Acara");
-    assert.equal(
-      (await koorA.request("GET", "/api/v1/timeline/report")).status,
-      403,
-      "koordinator tidak mengakses laporan lintas divisi",
+    // Beranda: koordinator melihat progres SEMUA divisi (D46), tetapi isi catatan hanya divisinya sendiri.
+    const asA = await koorA.request("GET", "/api/v1/timeline/report");
+    assert.equal(asA.status, 200);
+    assert.equal(asA.json.data.divisions.length, 2);
+    assert.equal(asA.json.data.totals.total, 2);
+    assert.deepEqual(
+      asA.json.data.divisions.map((d: { name: string; mine: boolean }) => [d.name, d.mine]),
+      [
+        ["Acara", true],
+        ["Konsumsi", false],
+      ],
     );
+    assert.equal(asA.json.data.recent_notes.length, 1, "catatan Acara milik divisinya sendiri");
+    const asB = await koorB.request("GET", "/api/v1/timeline/report");
+    assert.equal(asB.status, 200);
+    assert.equal(asB.json.data.divisions.length, 2);
+    assert.equal(
+      asB.json.data.recent_notes.length,
+      0,
+      "isi catatan divisi Acara tidak boleh bocor ke koordinator Konsumsi",
+    );
+    assert.doesNotMatch(JSON.stringify(asB.json.data), /Draf 1 selesai/);
   });
 
   it("tugas selesai tidak dihitung terlambat walau lewat tenggat", async () => {

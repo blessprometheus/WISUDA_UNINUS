@@ -69,6 +69,21 @@ Pemilik proyek memutuskan memakai sandi pilihannya sendiri untuk semua akun (sup
 - Mekanisme keamanan lain (CSRF, penguncian akun, pembatasan laju, log audit) tidak diubah tanpa diminta.
 - Pelaksanaan di **server produksi** tetap mengikuti [ADR-0010](0010-deploy-oleh-claude-dengan-batasan.md): memasang commit tertentu memerlukan "go" eksplisit dari pemilik proyek. D44 tidak mengubah aturan itu.
 
+## Pembaruan D46 (23 Okt 2026): beranda progres semua divisi, terbuka untuk koordinator
+
+**Keputusan pemilik proyek:** dashboard timeline punya beranda berisi laporan progres **seluruh divisi** yang dapat dilihat divisi lain. Ini merevisi poin 6 (koordinator hanya melihat divisinya).
+
+| Data timeline | Koordinator (divisi sendiri) | Koordinator (divisi lain) | Ketua | Superadmin |
+|---|---|---|---|---|
+| Beranda: ringkasan, persentase, jumlah per status, keterlambatan, tenggat terdekat | lihat | **lihat** | lihat | lihat |
+| Daftar pekerjaan (judul, status, tenggat, jumlah catatan) | lihat + ubah | **lihat saja** | lihat | lihat + ubah |
+| Isi catatan progres | lihat + tulis | **tidak** (403) | lihat | lihat + tulis |
+| Buat/ubah pekerjaan | ya | **tidak** (403) | tidak | ya |
+
+**Alasan membatasi isi catatan:** catatan progres bisa memuat hal internal divisi; laporan dan daftar pekerjaan cukup untuk koordinasi antar-divisi. Bila pemilik proyek ingin catatan ikut terbuka, itu perubahan kecil dan keputusan baru.
+
+Tidak berubah: koordinator dan ketua tetap tidak punya akses ke data wisudawan maupun rekap kehadiran (poin 6); petugas scan tidak punya akses timeline. Penegakan tetap di server dan diuji otomatis, termasuk bukti bahwa isi catatan divisi lain tidak bocor lewat laporan.
+
 ## Risiko
 
 | Risiko | Mitigasi |

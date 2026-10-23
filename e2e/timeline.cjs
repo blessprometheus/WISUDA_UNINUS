@@ -99,14 +99,14 @@ const psql = (q) =>
   await login(a.page, creds.A.email, creds.A.password);
   await a.page.waitForURL(/\/timeline$/);
   await a.page.getByText("Koordinator divisi").first().waitFor();
+  // D46: koordinator mendarat di Beranda (progres semua divisi), divisinya ditandai
+  await a.page.getByRole("tab", { name: /Beranda/ }).waitFor();
+  await a.page.getByText("Acara · divisi Anda").waitFor();
+  assert.equal(await a.page.getByText("Hanya lihat").count(), 0);
+  await a.page.getByRole("tab", { name: "Pekerjaan per divisi" }).click();
   const options = await a.page.locator("select").first().locator("option").allInnerTexts();
-  assert.equal(options.length, 1, "koordinator hanya melihat divisinya");
-  assert.ok(options[0].startsWith("Acara"));
-  assert.equal(
-    await a.page.getByRole("tab", { name: "Laporan progres" }).count(),
-    0,
-    "koordinator tidak punya tab laporan",
-  );
+  assert.ok(options.length >= 2, "koordinator melihat semua divisi di daftar");
+  assert.ok(options[0].startsWith("Acara") && options[0].includes("divisi Anda"));
   await a.page.getByLabel("Judul pekerjaan").first().fill("Susun rundown acara");
   await a.page.getByLabel("Tenggat").first().fill("2026-10-01");
   await a.page.getByRole("button", { name: "Tambah", exact: true }).click();
@@ -135,7 +135,10 @@ const psql = (q) =>
     const res = await fetch("/api/v1/admin/students");
     return { names: divs.data.map((d) => d.name), studentsStatus: res.status };
   });
-  assert.deepEqual(r.names, ["Acara"]);
+  assert.ok(
+    r.names.includes("Acara") && r.names.includes("Konsumsi"),
+    "daftar divisi memuat semua divisi (D46)",
+  );
   assert.equal(r.studentsStatus, 403);
   await a.page.goto(BASE + "/admin");
   await a.page.getByRole("heading", { name: "Akses ditolak" }).waitFor();
@@ -146,6 +149,7 @@ const psql = (q) =>
   const b = await newUser(browser);
   await login(b.page, creds.B.email, creds.B.password);
   await b.page.waitForURL(/\/timeline$/);
+  await b.page.getByRole("tab", { name: "Pekerjaan per divisi" }).click();
   await b.page.getByLabel("Judul pekerjaan").first().fill("Pesan konsumsi");
   await b.page.getByLabel("Status awal").selectOption("selesai");
   await b.page.getByRole("button", { name: "Tambah", exact: true }).click();
@@ -157,7 +161,7 @@ const psql = (q) =>
   const k = await newUser(browser);
   await login(k.page, creds.K.email, creds.K.password);
   await k.page.waitForURL(/\/timeline$/);
-  await k.page.getByRole("tab", { name: "Laporan progres" }).waitFor();
+  await k.page.getByRole("tab", { name: /Beranda/ }).waitFor();
   await k.page.getByText("pekerjaan selesai").waitFor();
   await k.page.getByText("Draf pertama selesai").waitFor();
   const report = (await k.page.locator("main").innerText()).replace(/\s+/g, " ");
@@ -188,7 +192,7 @@ const psql = (q) =>
 
   // 8. Superadmin melihat laporan juga
   await sa.page.goto(BASE + "/timeline");
-  await sa.page.getByRole("tab", { name: "Laporan progres" }).waitFor();
+  await sa.page.getByRole("tab", { name: /Beranda/ }).waitFor();
   console.log("8 superadmin dapat membuka timeline");
   await browser.close();
 })().catch(async (e) => {
