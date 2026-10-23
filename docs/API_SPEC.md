@@ -87,9 +87,9 @@ Akses darurat superadmin yang lupa kata sandi: `npm run admin:reset-password -- 
 | GET | `/timeline/tasks?division_id` | K (divisi mana pun, hanya lihat), T, S | Daftar pekerjaan (judul, status, tanggal mulai/selesai, deskripsi, jumlah catatan dan bukti) |
 | POST/PUT | `/timeline/tasks` , `/timeline/tasks/:id` | K (divisi miliknya), S | Buat/ubah pekerjaan: `title`, `status`, `start_date`, `end_date`, `description` (tanggal dan deskripsi opsional; selesai ≥ mulai) |
 | POST | `/timeline/tasks/:id/notes` | K (miliknya), S | Tambah catatan progres |
-| GET | `/timeline/tasks/:id/evidence` | K (miliknya), T, S | Daftar bukti (tanpa isi berkas) |
+| GET | `/timeline/tasks/:id/evidence` | K (semua divisi), T, S | Daftar bukti (tanpa isi berkas) |
 | POST | `/timeline/tasks/:id/evidence` | K (miliknya), S | Unggah bukti: isi mentah `image/jpeg`, `image/png`, `image/webp`, atau `application/pdf` (≤ 5 MB, maks. 5 per pekerjaan), nama di header `X-Filename`; jenis dari isi berkas (ADR-0012) |
-| GET | `/timeline/evidence/:evidenceId` | K (miliknya), T, S | Buka/unduh bukti (gambar inline, PDF attachment; CSP sandbox, nosniff) |
+| GET | `/timeline/evidence/:evidenceId` | K (semua divisi), T, S | Buka/unduh bukti (gambar inline, PDF attachment; CSP sandbox, nosniff) |
 | POST | `/timeline/evidence/:evidenceId/delete` | K (miliknya), S | Hapus bukti |
 | GET | `/timeline/report` | K, T, S | Beranda: ringkasan progres semua divisi; isi catatan terbaru milik divisi sendiri untuk K (D46) |
 

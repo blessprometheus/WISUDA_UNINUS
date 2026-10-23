@@ -295,13 +295,16 @@ describe("bukti pekerjaan: unggah, daftar, unduh, hapus", () => {
     assert.equal(n.rows[0].n, 5);
   });
 
-  it("koordinator divisi lain tidak dapat mengunggah, melihat daftar, atau mengunduh; hanya melihat jumlahnya", async () => {
+  it("koordinator divisi lain DAPAT melihat dan mengunduh bukti (keputusan pemilik proyek), tetapi tidak dapat mengunggah atau menghapus", async () => {
+    // Melihat: terbuka untuk semua divisi.
+    const list = await koorB.request("GET", `/api/v1/timeline/tasks/${taskA}/evidence`);
+    assert.equal(list.status, 200);
+    assert.equal(list.json.data.length, 5);
+    const dl = await koorB.request("GET", `/api/v1/timeline/evidence/${pngId}`);
+    assert.equal(dl.status, 200);
+    assert.deepEqual(Buffer.from(dl.raw), PNG);
+    // Menulis: tetap hanya divisi sendiri.
     assert.equal((await upload(koorB, taskA, PNG)).status, 403);
-    assert.equal(
-      (await koorB.request("GET", `/api/v1/timeline/tasks/${taskA}/evidence`)).status,
-      403,
-    );
-    assert.equal((await koorB.request("GET", `/api/v1/timeline/evidence/${pngId}`)).status, 403);
     assert.equal(
       (await koorB.request("POST", `/api/v1/timeline/evidence/${pngId}/delete`)).status,
       403,
@@ -312,8 +315,10 @@ describe("bukti pekerjaan: unggah, daftar, unduh, hapus", () => {
     assert.equal(seen.evidence_count, 5);
     assert.ok(
       !JSON.stringify(tasks.json.data).includes("isi-png-uji"),
-      "isi berkas tidak ada di daftar",
+      "daftar pekerjaan tidak membawa isi berkas",
     );
+    // Isi CATATAN divisi lain tetap tertutup.
+    assert.equal((await koorB.request("GET", `/api/v1/timeline/tasks/${taskA}/notes`)).status, 403);
     const stillThere = await pool.query("SELECT 1 FROM task_evidence WHERE id = $1", [pngId]);
     assert.equal(stillThere.rowCount, 1);
   });
@@ -369,6 +374,12 @@ describe("bukti pekerjaan: unggah, daftar, unduh, hapus", () => {
       (await koorA.request("POST", "/api/v1/timeline/evidence/999999/delete")).status,
       404,
     );
+    // id tidak valid → 422 (bukan menggantung), dan tanpa login → 401 (id yang ada tidak bisa ditebak).
+    assert.equal((await koorA.request("GET", "/api/v1/timeline/evidence/abc")).status, 422);
+    assert.equal((await koorA.request("GET", "/api/v1/timeline/tasks/abc/evidence")).status, 422);
+    const anon = new Client(app);
+    assert.equal((await anon.request("GET", "/api/v1/timeline/evidence/999999")).status, 401);
+    assert.equal((await anon.request("GET", "/api/v1/timeline/tasks/999999/evidence")).status, 401);
   });
 
   it("koordinator menghapus bukti divisinya; hapus pekerjaan oleh superadmin ikut menghapus semua bukti; semuanya diaudit", async () => {

@@ -1,5 +1,7 @@
 /** Klien API sisi-browser: menangani cookie CSRF, JSON, dan bentuk respons { success, data | message }. */
 
+import { shrinkImage } from "@/lib/image";
+
 export interface PageMeta {
   page: number;
   per_page: number;
@@ -101,16 +103,24 @@ const EVIDENCE_TYPES: Record<string, string> = {
 };
 
 /**
- * Unggah berkas bukti pekerjaan (JPG, PNG, WebP, PDF; maks. 5 MB). Pemeriksaan di sini hanya untuk pesan cepat;
- * server menentukan jenis dari ISI berkas dan menolak yang tidak sesuai.
+ * Unggah berkas bukti pekerjaan (foto JPG/PNG/WebP atau PDF; maks. 5 MB). Foto besar dikecilkan otomatis lebih dulu
+ * (lihat `shrinkImage`). Pemeriksaan di sini hanya untuk pesan cepat; server menentukan jenis dari ISI berkas dan
+ * menolak yang tidak sesuai.
  */
-export function uploadEvidence<T>(taskId: number, file: File): Promise<ApiResult<T>> {
+export async function uploadEvidence<T>(taskId: number, original: File): Promise<ApiResult<T>> {
+  const refuse = (message: string): ApiResult<T> => ({ ok: false, status: 0, message });
+  if (!EVIDENCE_TYPES[original.name.split(".").pop()?.toLowerCase() ?? ""]) {
+    return refuse("Jenis berkas tidak didukung. Gunakan JPG, PNG, WebP, atau PDF.");
+  }
+  const file = await shrinkImage(original);
   const type = EVIDENCE_TYPES[file.name.split(".").pop()?.toLowerCase() ?? ""];
-  const refuse = (message: string) =>
-    Promise.resolve<ApiResult<T>>({ ok: false, status: 0, message });
   if (!type) return refuse("Jenis berkas tidak didukung. Gunakan JPG, PNG, WebP, atau PDF.");
   if (file.size === 0) return refuse("Berkas kosong.");
-  if (file.size > EVIDENCE_MAX_BYTES) return refuse("Ukuran berkas maksimal 5 MB.");
+  if (file.size > EVIDENCE_MAX_BYTES) {
+    return refuse(
+      "Ukuran berkas maksimal 5 MB. Foto dikecilkan otomatis; untuk PDF, kecilkan dulu ukurannya.",
+    );
+  }
   return send<T>(
     "POST",
     `/api/v1/timeline/tasks/${taskId}/evidence`,

@@ -262,14 +262,16 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
 
   // ---------- Bukti pekerjaan (D50) ----------
   // Berkas dikirim sebagai isi mentah (tanpa multipart). Jenis ditentukan dari isi berkas, bukan dari nama atau
-  // Content-Type; ukuran ≤ 5 MB; maksimal 5 berkas per pekerjaan. Akses = sama dengan ISI catatan (divisi sendiri,
-  // ketua, superadmin); menulis dan menghapus hanya superadmin dan koordinator divisi itu.
+  // Content-Type; ukuran ≤ 5 MB; maksimal 5 berkas per pekerjaan. MELIHAT/mengunduh: semua peran timeline (koordinator
+  // semua divisi, ketua, superadmin; keputusan pemilik proyek 23 Okt). Menulis dan menghapus: hanya superadmin dan
+  // koordinator divisi itu. (Isi CATATAN tetap hanya untuk divisi sendiri, ketua, superadmin.)
   app.get("/api/v1/timeline/tasks/:id/evidence", async (request, reply) => {
-    const id = positiveId(params(request).id);
-    const divisionId = id ? await taskDivision(id) : null;
-    if (id && !divisionId) return fail(reply, 404, "Pekerjaan tidak ditemukan.");
-    const auth = await guardDivision(request, reply, READ_ROLES, divisionId, false);
+    // Login diperiksa lebih dulu agar pengunjung tanpa login tidak bisa menebak id yang ada (401, bukan 404).
+    const auth = await requireAuth(request, reply, READ_ROLES);
     if (!auth) return reply;
+    const id = positiveId(params(request).id);
+    if (!id) return fail(reply, 422, "Pekerjaan tidak valid.");
+    if (!(await taskDivision(id))) return fail(reply, 404, "Pekerjaan tidak ditemukan.");
     const result = await pool.query(
       `SELECT e.id, e.filename, e.mime, e.size_bytes, e.created_at, u.name AS uploaded_by
          FROM task_evidence e JOIN users u ON u.id = e.uploaded_by WHERE e.task_id = $1 ORDER BY e.id`,
@@ -338,18 +340,16 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
   );
 
   app.get("/api/v1/timeline/evidence/:evidenceId", async (request, reply) => {
+    const auth = await requireAuth(request, reply, READ_ROLES);
+    if (!auth) return reply;
     const evidenceId = positiveId(params(request).evidenceId);
-    const found = evidenceId
-      ? await pool.query<{ division_id: number; filename: string; mime: string; data: Buffer }>(
-          `SELECT t.division_id, e.filename, e.mime, e.data
-             FROM task_evidence e JOIN tasks t ON t.id = e.task_id WHERE e.id = $1`,
-          [evidenceId],
-        )
-      : null;
-    const row = found?.rows[0];
-    if (evidenceId && !row) return fail(reply, 404, "Bukti tidak ditemukan.");
-    const auth = await guardDivision(request, reply, READ_ROLES, row?.division_id ?? null, false);
-    if (!auth || !row) return reply;
+    if (!evidenceId) return fail(reply, 422, "Bukti tidak valid.");
+    const found = await pool.query<{ filename: string; mime: string; data: Buffer }>(
+      "SELECT filename, mime, data FROM task_evidence WHERE id = $1",
+      [evidenceId],
+    );
+    const row = found.rows[0];
+    if (!row) return fail(reply, 404, "Bukti tidak ditemukan.");
     const image = row.mime.startsWith("image/");
     const asciiName = row.filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
     const encodedName = encodeURIComponent(row.filename);

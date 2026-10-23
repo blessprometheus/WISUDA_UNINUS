@@ -331,7 +331,8 @@ function Evidence({
             {busy ? "Mengunggah…" : "Unggah"}
           </button>
           <p className="text-[13px] text-ink-muted sm:col-span-2">
-            JPG, PNG, WebP, atau PDF; maksimal 5 MB per berkas dan 5 berkas per pekerjaan.
+            Foto (JPG, PNG, WebP) atau PDF; maksimal 5 MB per berkas dan 5 berkas per pekerjaan.
+            Foto besar dikecilkan otomatis.
           </p>
         </form>
       )}
@@ -426,19 +427,16 @@ function TaskRow({
         <Td>
           <span className="flex flex-wrap items-center gap-2">
             {canReadNotes ? (
-              <>
-                <button type="button" className={btnGhost} onClick={() => toggle("notes")}>
-                  Catatan ({task.note_count})
-                </button>
-                <button type="button" className={btnGhost} onClick={() => toggle("evidence")}>
-                  Bukti ({task.evidence_count})
-                </button>
-              </>
+              <button type="button" className={btnGhost} onClick={() => toggle("notes")}>
+                Catatan ({task.note_count})
+              </button>
             ) : (
-              <span className="text-[13px] text-ink-muted">
-                {task.note_count} catatan · {task.evidence_count} bukti
-              </span>
+              <span className="text-[13px] text-ink-muted">{task.note_count} catatan</span>
             )}
+            {/* Bukti dapat dilihat semua divisi; menambah dan menghapus hanya di divisi sendiri (canWrite). */}
+            <button type="button" className={btnGhost} onClick={() => toggle("evidence")}>
+              Bukti ({task.evidence_count})
+            </button>
             {canWrite && (
               <button type="button" className={btnGhost} onClick={() => setEditing((v) => !v)}>
                 {editing ? "Batal" : "Ubah"}
@@ -593,8 +591,8 @@ function Tasks({ role, initialDivision }: { role: Role; initialDivision: number 
                 />
               </Field>
               <p className="mt-1 text-[13px] text-ink-muted">
-                JPG, PNG, WebP, atau PDF; maksimal 5 MB. Bukti lain dapat ditambahkan nanti
-                (maksimal 5 berkas per pekerjaan).
+                Foto (JPG, PNG, WebP) atau PDF; maksimal 5 MB. Foto besar dikecilkan otomatis. Bukti
+                lain dapat ditambahkan nanti (maksimal 5 berkas per pekerjaan).
               </p>
             </div>
             <div className="sm:col-span-4">
