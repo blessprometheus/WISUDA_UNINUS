@@ -20,6 +20,9 @@ Bila bertentangan, yang berlaku adalah `AGENTS.md` dan dokumen di `docs/` proyek
 - Skill pendukung yang relevan bila tersedia: `senior-architect`, `tech-stack-evaluator`, `senior-frontend`,
   `senior-security`, `design:design-system`, `design:accessibility-review`, `design:ux-copy`,
   `security-review`, `code-review`.
+- `ui-ux-pro-max` (pihak ketiga, MIT) **terpasang lokal** di `.claude/skills/ui-ux-pro-max/` per 23 Oktober 2026 setelah
+  audit ([ADR-0013](docs/adr/0013-skill-ui-ux-pro-max-dan-pedoman-dashboard.md)); **tidak di-commit** (dikecualikan lewat
+  `.git/info/exclude`). Panggil skrip dengan jalur langsung. Hasilnya saran; identitas UNINUS dan aturan proyek tetap utama.
 - Skill di `.opencode/skills/` milik OpenCode dan tidak dimuat oleh Claude Code.
 
 ## Grilling

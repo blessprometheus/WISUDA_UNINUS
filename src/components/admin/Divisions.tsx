@@ -122,9 +122,9 @@ export function Divisions() {
       </PageTitle>
       <div className="grid gap-6">
         <Notice kind="info">
-          Satu divisi dapat dipegang <strong>beberapa koordinator</strong>. Koordinator hanya
-          melihat dan mengubah pekerjaan di divisinya; ketua hanya melihat laporan. Akun berperan
-          koordinator dibuat di menu{" "}
+          Satu divisi dapat dipegang <strong>beberapa koordinator</strong>. Koordinator dapat
+          melihat progres semua divisi, tetapi hanya mengubah pekerjaan di divisinya; ketua hanya
+          melihat. Akun berperan koordinator dibuat di menu{" "}
           <Link href="/admin/pengguna" className="underline">
             Pengguna
           </Link>

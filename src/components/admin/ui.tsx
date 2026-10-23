@@ -4,16 +4,14 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { api, type ApiResult, type PageMeta } from "@/lib/api";
 
-export const btnPrimary =
-  "inline-flex min-h-11 items-center justify-center rounded bg-forest-900 px-4 text-[14px] font-bold text-white hover:bg-forest-800 disabled:cursor-not-allowed disabled:opacity-50";
-export const btnGold =
-  "inline-flex min-h-11 items-center justify-center rounded bg-gold px-4 text-[14px] font-bold text-forest-900 hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-50";
-export const btnGhost =
-  "inline-flex min-h-11 items-center justify-center rounded border-2 border-forest-900/30 px-4 text-[14px] font-bold text-forest-900 hover:bg-forest-900/5 disabled:cursor-not-allowed disabled:opacity-50";
-export const btnDanger =
-  "inline-flex min-h-11 items-center justify-center rounded bg-[#b3261e] px-4 text-[14px] font-bold text-white hover:bg-[#8f1d17] disabled:cursor-not-allowed disabled:opacity-50";
+const btnBase =
+  "inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-4 text-[14px] font-bold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50";
+export const btnPrimary = `${btnBase} bg-forest-900 text-white hover:bg-forest-800`;
+export const btnGold = `${btnBase} bg-gold text-forest-900 hover:bg-gold-soft`;
+export const btnGhost = `${btnBase} border-2 border-forest-900/30 text-forest-900 hover:bg-forest-900/5`;
+export const btnDanger = `${btnBase} bg-[#b3261e] text-white hover:bg-[#8f1d17]`;
 export const inputClass =
-  "min-h-11 w-full rounded border-2 border-forest-900/25 bg-white px-3 text-[15px] text-forest-900 focus:border-forest-900";
+  "min-h-11 w-full rounded-lg border-2 border-forest-900/25 bg-white px-3 text-[15px] text-forest-900 transition-colors duration-150 focus:border-forest-900";
 
 export function PageTitle({ title, children }: { title: string; children?: ReactNode }) {
   return (
@@ -34,8 +32,9 @@ export function Card({
   className?: string;
 }) {
   return (
+    // min-w-0: kartu di dalam grid tidak boleh melebar mengikuti tabel di dalamnya (penyebab geser horizontal di HP).
     <section
-      className={`rounded-lg border border-forest-900/10 bg-white p-5 shadow-sm ${className}`}
+      className={`min-w-0 rounded-xl border border-forest-900/10 bg-white p-5 shadow-sm ${className}`}
     >
       {title && <h2 className="mb-4 text-lg font-extrabold text-forest-900">{title}</h2>}
       {children}
@@ -112,7 +111,7 @@ export function Badge({
     gray: "bg-forest-900/10 text-forest-900",
   } as const;
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-[12px] font-bold ${map[tone]}`}>
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[12px] font-bold ${map[tone]}`}>
       {children}
     </span>
   );
@@ -171,11 +170,15 @@ export function clockOf(iso?: string | null): string {
 interface LoadState<T> {
   key: string;
   result: ApiResult<T>;
+  /** Hasil terakhir yang BERHASIL untuk `path` yang sama (dipertahankan bila pemuatan ulang gagal). */
+  good: { path: string; result: ApiResult<T>; at: number } | null;
 }
 
 /**
  * Memuat data GET. `path = null` menunda pemuatan. `reload()` memuat ulang.
  * `loading` bernilai true selama hasil belum cocok dengan permintaan terakhir.
+ * Bila pemuatan ulang gagal, data terakhir yang berhasil untuk path yang sama tetap dikembalikan bersama `error`,
+ * dan `updatedAt` menunjukkan kapan data itu diperoleh (agar tampilan dapat menandainya usang).
  */
 export function useLoad<T>(path: string | null) {
   const [tick, setTick] = useState(0);
@@ -186,7 +189,16 @@ export function useLoad<T>(path: string | null) {
     if (!path) return;
     let alive = true;
     void api<T>("GET", path).then((result) => {
-      if (alive) setState({ key: `${path}#${tick}`, result });
+      if (!alive) return;
+      setState((prev) => ({
+        key: `${path}#${tick}`,
+        result,
+        good: result.ok
+          ? { path, result, at: Date.now() }
+          : prev?.good?.path === path
+            ? prev.good
+            : null,
+      }));
     });
     return () => {
       alive = false;
@@ -195,11 +207,13 @@ export function useLoad<T>(path: string | null) {
 
   const reload = useCallback(() => setTick((n) => n + 1), []);
   const ready = state?.key === key;
+  const good = state?.good && state.good.path === path ? state.good : null;
   return {
     loading: Boolean(path) && !ready,
-    data: state?.result.data,
-    meta: state?.result.meta,
+    data: state?.result.data ?? good?.result.data,
+    meta: state?.result.meta ?? good?.result.meta,
     error: ready && !state.result.ok ? (state.result.message ?? "Gagal memuat data.") : null,
+    updatedAt: good?.at ?? null,
     reload,
   };
 }

@@ -69,7 +69,7 @@ let lastPage = null;
 
   // 3. Ringkasan menampilkan data sesi aktif
   await page.getByText("Wisudawan aktif").waitFor();
-  assert.ok((await page.locator("main").innerText()).includes("Per program studi"));
+  assert.ok((await page.locator("main").innerText()).includes("per program studi"));
   await page.screenshot({ path: `${out}/a-ringkasan.png` });
   console.log("3 ringkasan tampil");
 
@@ -190,7 +190,7 @@ let lastPage = null;
 
   // 8. Ringkasan sekarang menunjukkan angka
   await page.getByRole("link", { name: "Ringkasan" }).click();
-  await page.getByText("Hadir (", { exact: false }).first().waitFor();
+  await page.getByText("wisudawan hadir").first().waitFor();
   console.log("8 ringkasan setelah ada kehadiran");
 
   // 9. Pengguna: buat akun, kata sandi sementara sekali, login dengan akun baru
