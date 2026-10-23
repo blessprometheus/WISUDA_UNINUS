@@ -45,3 +45,23 @@ tanpa hidrasi atau pemantau viewport.
 **Alasan:** Mayoritas pengunjung akan memakai HP. Gulir native menghindari loop animasi yang
 terus berjalan saat pengguna membaca informasi dan galeri. Pengujian visual dan rasa gulir di
 perangkat HP fisik tetap diperlukan sebelum rilis.
+
+## Informasi Wisuda muncul satu per satu saat digulir (23 Oktober 2026)
+
+**Keputusan pemilik proyek:** Lenis hanya untuk halaman publik (frontend), dan bagian "Informasi Wisuda"
+menampilkan informasinya **satu per satu saat digulir**. Hal ini tidak membatalkan penyesuaian mobile di atas.
+
+**Implementasi:** komponen `RevealOnScroll` (CSS transisi + `IntersectionObserver` bawaan peramban,
+**tanpa menambah dependensi**; Motion tetap tidak dipakai). Tiap baris informasi punya pemicunya sendiri dan
+muncul sekali (opasitas + naik sedikit; isi menyusul sesaat setelah label).
+- **Hanya desktop** dengan pointer presisi dan tanpa "kurangi gerakan", syarat yang sama dengan Lenis. Di desktop
+  tiap baris dibuat besar dan diberi ruang gulir sendiri (± 34% tinggi layar) agar benar-benar muncul bergantian.
+- **HP, layar sentuh, "kurangi gerakan", sebelum hidrasi, dan tanpa JavaScript:** semua informasi langsung terlihat
+  dan tampilan tetap ringkas (konsisten dengan keputusan 21 Oktober).
+- Isi selalu ada di HTML (hanya opasitas/posisi yang dianimasikan), sehingga mesin pencari dan pembaca layar tidak
+  terpengaruh. Baris yang sudah terlihat saat halaman dimuat (mis. tiba lewat tombol "Lihat Informasi" atau muat
+  ulang di tengah halaman) tidak disembunyikan.
+
+**Terverifikasi di browser nyata:** baris muncul 0 → 1 → 2 → 3 → 4 → 5 mengikuti gulir dan tidak menghilang lagi;
+tiba lewat "Lihat Informasi" menampilkan baris yang terlihat; "kurangi gerakan" dan HP menampilkan semua baris
+(opasitas 1); teks lengkap ada di HTML mentah.

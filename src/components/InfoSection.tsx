@@ -1,4 +1,29 @@
+import styles from "@/components/InfoSection.module.css";
+import { RevealOnScroll } from "@/components/motion/RevealOnScroll";
 import { siteConfig } from "@/content/site";
+
+interface Item {
+  label: string;
+  value: string | null;
+  notes?: readonly string[];
+}
+
+/** Urutan di sini = urutan muncul saat digulir (desktop). */
+const items: readonly Item[] = [
+  { label: "Gladi resik", value: siteConfig.rehearsalDate },
+  { label: "Hari wisuda", value: siteConfig.eventDate },
+  {
+    label: "Sesi",
+    value: "Pagi dan siang",
+    notes: ["Jam dan pembagian peserta per sesi menyusul."],
+  },
+  {
+    label: "Lokasi",
+    value: siteConfig.venue,
+    notes: [siteConfig.venueAddress, "Gladi resik dan wisuda diselenggarakan di lokasi yang sama."],
+  },
+  { label: "Pendaftaran & ketentuan", value: null },
+];
 
 export function InfoSection() {
   return (
@@ -12,45 +37,30 @@ export function InfoSection() {
         </h2>
 
         <dl className="mt-8 border-y border-forest-900/20 sm:mt-10">
-          <div className="grid gap-1 py-5 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(0,1fr)] sm:items-baseline sm:gap-8 sm:py-6">
-            <dt className="text-sm font-semibold text-brand-green-deep">Gladi resik</dt>
-            <dd className="text-[19px] font-bold leading-snug text-forest-900 sm:text-2xl">
-              {siteConfig.rehearsalDate}
-            </dd>
-          </div>
-          <div className="grid gap-1 border-t border-forest-900/15 py-5 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(0,1fr)] sm:items-baseline sm:gap-8 sm:py-6">
-            <dt className="text-sm font-semibold text-brand-green-deep">Hari wisuda</dt>
-            <dd className="text-[19px] font-bold leading-snug text-forest-900 sm:text-2xl">
-              {siteConfig.eventDate}
-            </dd>
-          </div>
-          <div className="grid gap-1 border-t border-forest-900/15 py-5 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(0,1fr)] sm:items-baseline sm:gap-8 sm:py-6">
-            <dt className="text-sm font-semibold text-brand-green-deep">Sesi</dt>
-            <dd className="text-[19px] font-bold leading-snug text-forest-900 sm:text-2xl">
-              Pagi dan siang
-              <span className="mt-1 block text-base font-normal leading-7 text-ink-muted">
-                Jam dan pembagian peserta per sesi menyusul.
-              </span>
-            </dd>
-          </div>
-          <div className="grid gap-1 border-t border-forest-900/15 py-5 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(0,1fr)] sm:items-baseline sm:gap-8 sm:py-6">
-            <dt className="text-sm font-semibold text-brand-green-deep">Lokasi</dt>
-            <dd className="text-[19px] font-bold leading-snug text-forest-900 sm:text-2xl">
-              {siteConfig.venue}
-              <span className="mt-1 block text-base font-normal leading-7 text-ink-muted">
-                {siteConfig.venueAddress}
-              </span>
-              <span className="mt-1 block text-base font-normal leading-7 text-ink-muted">
-                Gladi resik dan wisuda diselenggarakan di lokasi yang sama.
-              </span>
-            </dd>
-          </div>
-          <div className="grid gap-1 border-t border-forest-900/15 py-5 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(0,1fr)] sm:items-baseline sm:gap-8 sm:py-6">
-            <dt className="text-sm font-semibold text-brand-green-deep">
-              Pendaftaran &amp; ketentuan
-            </dt>
-            <dd className="text-base leading-7 text-ink-muted">Segera diumumkan</dd>
-          </div>
+          {items.map((item, index) => (
+            <RevealOnScroll
+              key={item.label}
+              className={`${styles.row} grid gap-1 py-5 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(0,1fr)] sm:items-baseline sm:gap-8 sm:py-6 ${
+                index > 0 ? "border-t border-forest-900/15" : ""
+              }`}
+            >
+              <dt className={`${styles.label} font-semibold text-brand-green-deep`}>
+                {item.label}
+              </dt>
+              {item.value ? (
+                <dd className={`${styles.value} font-bold leading-snug text-forest-900`}>
+                  {item.value}
+                  {item.notes?.map((note) => (
+                    <span key={note} className={`${styles.note} text-ink-muted`}>
+                      {note}
+                    </span>
+                  ))}
+                </dd>
+              ) : (
+                <dd className={`${styles.pending} text-ink-muted`}>Segera diumumkan</dd>
+              )}
+            </RevealOnScroll>
+          ))}
         </dl>
       </div>
     </section>

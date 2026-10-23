@@ -1,0 +1,60 @@
+/*
+ * Ukuran huruf di sini (bukan di Tailwind) agar urutan penimpaan jelas. Dasar = HP; tablet; lalu desktop dengan pointer
+ * presisi (syarat yang sama dengan gulir halus Lenis dan RevealOnScroll): tiap informasi dibuat besar dan diberi ruang
+ * gulir sendiri agar muncul satu per satu. Di HP dan pada "kurangi gerakan" tampilan tetap ringkas.
+ */
+.label {
+  font-size: 0.875rem;
+}
+
+.value {
+  font-size: 19px;
+}
+
+.note {
+  margin-top: 0.25rem;
+  display: block;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75rem;
+}
+
+.pending {
+  font-size: 1rem;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 40rem) {
+  .value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 48rem) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .row {
+    min-height: 34svh;
+    align-items: center;
+  }
+
+  .label {
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .value {
+    font-size: clamp(2rem, 4.4vw, 3.9rem);
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+  }
+
+  .note {
+    margin-top: 0.75rem;
+    font-size: 1.15rem;
+    letter-spacing: 0;
+  }
+
+  .pending {
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  }
+}

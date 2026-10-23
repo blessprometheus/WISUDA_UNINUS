@@ -1,0 +1,29 @@
+/*
+ * Hanya state "hidden" dan "shown" yang menganimasikan anak langsung; state "static" (bawaan) tidak mengubah apa pun,
+ * sehingga isi terlihat penuh tanpa JavaScript, sebelum hidrasi, di HP, dan pada preferensi "kurangi gerakan".
+ */
+.item[data-state="hidden"] > * {
+  opacity: 0;
+  transform: translateY(2.75rem);
+}
+
+.item[data-state="shown"] > * {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Anak kedua (isi) menyusul sesaat setelah anak pertama (label). */
+.item[data-state="shown"] > :nth-child(2) {
+  transition-delay: 0.14s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
