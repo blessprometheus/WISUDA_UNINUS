@@ -108,7 +108,9 @@ const psql = (q) =>
   assert.ok(options.length >= 2, "koordinator melihat semua divisi di daftar");
   assert.ok(options[0].startsWith("Acara") && options[0].includes("divisi Anda"));
   await a.page.getByLabel("Judul pekerjaan").first().fill("Susun rundown acara");
-  await a.page.getByLabel("Tenggat").first().fill("2026-10-01");
+  await a.page.getByLabel("Tanggal mulai").first().fill("2026-09-20");
+  await a.page.getByLabel("Tanggal selesai").first().fill("2026-10-01");
+  await a.page.getByLabel("Deskripsi").first().fill("Rundown final untuk gladi dan hari-H.");
   await a.page.getByRole("button", { name: "Tambah", exact: true }).click();
   const row = a.page.locator("tr", { hasText: "Susun rundown acara" });
   await row.waitFor();
@@ -116,7 +118,7 @@ const psql = (q) =>
   await row.getByRole("button", { name: "Ubah" }).click();
   await a.page
     .locator("tr", { hasText: "Judul pekerjaan" })
-    .getByLabel("Status")
+    .getByLabel("Status pekerjaan")
     .selectOption("berjalan");
   await a.page.getByRole("button", { name: "Simpan", exact: true }).click();
   await row.getByText("Berjalan").waitFor();
@@ -151,7 +153,7 @@ const psql = (q) =>
   await b.page.waitForURL(/\/timeline$/);
   await b.page.getByRole("tab", { name: "Pekerjaan per divisi" }).click();
   await b.page.getByLabel("Judul pekerjaan").first().fill("Pesan konsumsi");
-  await b.page.getByLabel("Status awal").selectOption("selesai");
+  await b.page.getByLabel("Status pekerjaan").selectOption("selesai");
   await b.page.getByRole("button", { name: "Tambah", exact: true }).click();
   await b.page.locator("tr", { hasText: "Pesan konsumsi" }).getByText("Selesai").waitFor();
   await b.ctx.close();

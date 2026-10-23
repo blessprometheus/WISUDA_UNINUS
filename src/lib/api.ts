@@ -29,8 +29,8 @@ async function refreshCsrf(): Promise<void> {
 }
 
 interface RequestBody {
-  /** Isi mentah (mis. CSV). Bila tidak ada, `json` dikirim sebagai JSON. */
-  raw?: string;
+  /** Isi mentah (mis. CSV atau berkas bukti). Bila tidak ada, `json` dikirim sebagai JSON. */
+  raw?: string | Blob;
   contentType?: string;
   extraHeaders?: Record<string, string>;
 }
@@ -43,7 +43,7 @@ async function send<T>(
   retried: boolean,
 ): Promise<ApiResult<T>> {
   const headers: Record<string, string> = { ...raw.extraHeaders };
-  let payload: string | undefined;
+  let payload: string | Blob | undefined;
   if (method !== "GET") {
     if (!readCookie("XSRF-TOKEN")) await refreshCsrf();
     headers["X-XSRF-TOKEN"] = readCookie("XSRF-TOKEN") ?? "";
@@ -89,6 +89,39 @@ export function api<T>(
   body?: unknown,
 ): Promise<ApiResult<T>> {
   return send<T>(method, path, body, {}, false);
+}
+
+export const EVIDENCE_MAX_BYTES = 5 * 1024 * 1024;
+const EVIDENCE_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  pdf: "application/pdf",
+};
+
+/**
+ * Unggah berkas bukti pekerjaan (JPG, PNG, WebP, PDF; maks. 5 MB). Pemeriksaan di sini hanya untuk pesan cepat;
+ * server menentukan jenis dari ISI berkas dan menolak yang tidak sesuai.
+ */
+export function uploadEvidence<T>(taskId: number, file: File): Promise<ApiResult<T>> {
+  const type = EVIDENCE_TYPES[file.name.split(".").pop()?.toLowerCase() ?? ""];
+  const refuse = (message: string) =>
+    Promise.resolve<ApiResult<T>>({ ok: false, status: 0, message });
+  if (!type) return refuse("Jenis berkas tidak didukung. Gunakan JPG, PNG, WebP, atau PDF.");
+  if (file.size === 0) return refuse("Berkas kosong.");
+  if (file.size > EVIDENCE_MAX_BYTES) return refuse("Ukuran berkas maksimal 5 MB.");
+  return send<T>(
+    "POST",
+    `/api/v1/timeline/tasks/${taskId}/evidence`,
+    undefined,
+    {
+      raw: file,
+      contentType: type,
+      extraHeaders: { "X-Filename": encodeURIComponent(file.name).slice(0, 200) },
+    },
+    false,
+  );
 }
 
 /** Unggah isi berkas CSV (teks) ke endpoint impor. */

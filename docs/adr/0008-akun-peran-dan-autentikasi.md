@@ -76,8 +76,8 @@ Pemilik proyek memutuskan memakai sandi pilihannya sendiri untuk semua akun (sup
 | Data timeline | Koordinator (divisi sendiri) | Koordinator (divisi lain) | Ketua | Superadmin |
 |---|---|---|---|---|
 | Beranda: ringkasan, persentase, jumlah per status, keterlambatan, tenggat terdekat | lihat | **lihat** | lihat | lihat |
-| Daftar pekerjaan (judul, status, tenggat, jumlah catatan) | lihat + ubah | **lihat saja** | lihat | lihat + ubah |
-| Isi catatan progres | lihat + tulis | **tidak** (403) | lihat | lihat + tulis |
+| Daftar pekerjaan (judul, status, tanggal mulai/selesai, deskripsi, jumlah catatan dan bukti) | lihat + ubah | **lihat saja** | lihat | lihat + ubah |
+| Isi catatan progres dan berkas bukti (ADR-0012) | lihat + tulis/unggah | **tidak** (403) | lihat | lihat + tulis |
 | Buat/ubah pekerjaan | ya | **tidak** (403) | tidak | ya |
 
 **Alasan membatasi isi catatan:** catatan progres bisa memuat hal internal divisi; laporan dan daftar pekerjaan cukup untuk koordinasi antar-divisi. Bila pemilik proyek ingin catatan ikut terbuka, itu perubahan kecil dan keputusan baru.

@@ -60,7 +60,7 @@ before(async () => {
     await koorA.request("POST", "/api/v1/timeline/tasks", {
       division_id: divA,
       title: "Susun rundown",
-      due_date: dayOffset(-2),
+      end_date: dayOffset(-2),
     })
   ).json.data.id;
   taskB = (
@@ -68,7 +68,7 @@ before(async () => {
       division_id: divB,
       title: "Pesan konsumsi",
       status: "berjalan",
-      due_date: dayOffset(5),
+      end_date: dayOffset(5),
     })
   ).json.data.id;
 });
@@ -245,7 +245,7 @@ describe("pekerjaan, catatan, dan laporan", () => {
     const upd = await koorA.request("PUT", `/api/v1/timeline/tasks/${taskA}`, {
       title: "Susun rundown final",
       status: "berjalan",
-      due_date: dayOffset(-2),
+      end_date: dayOffset(-2),
     });
     assert.equal(upd.status, 200);
     assert.equal(
@@ -268,7 +268,7 @@ describe("pekerjaan, catatan, dan laporan", () => {
     for (const bad of [
       { division_id: divA, title: "" },
       { division_id: divA, title: "x", status: "bebas" },
-      { division_id: divA, title: "x", due_date: "31/12/2026" },
+      { division_id: divA, title: "x", end_date: "31/12/2026" },
     ])
       assert.equal(
         (await koorA.request("POST", "/api/v1/timeline/tasks", bad)).status,
@@ -285,7 +285,7 @@ describe("pekerjaan, catatan, dan laporan", () => {
     await koorB.request("PUT", `/api/v1/timeline/tasks/${taskB}`, {
       title: "Pesan konsumsi",
       status: "selesai",
-      due_date: dayOffset(5),
+      end_date: dayOffset(5),
     });
     const res = await ketua.request("GET", "/api/v1/timeline/report");
     assert.equal(res.status, 200);
@@ -326,7 +326,7 @@ describe("pekerjaan, catatan, dan laporan", () => {
     await koorA.request("PUT", `/api/v1/timeline/tasks/${taskA}`, {
       title: "Susun rundown final",
       status: "selesai",
-      due_date: dayOffset(-2),
+      end_date: dayOffset(-2),
     });
     const res = await admin.request("GET", "/api/v1/timeline/report");
     assert.equal(res.json.data.totals.terlambat, 0);

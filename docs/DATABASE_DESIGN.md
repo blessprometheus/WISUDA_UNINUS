@@ -46,7 +46,8 @@
 |---|---|---|
 | `divisions` | `id`, `name` (unik) | ± 10 divisi |
 | `user_divisions` | `user_id`, `division_id` | cakupan `koordinator`; `ketua` membaca semua divisi |
-| `tasks` | `id`, `division_id`, `title`, `status` ∈ {`belum`,`berjalan`,`selesai`,`tertunda`}, `due_date`, `created_by`, `created_at`, `updated_at` | |
+| `tasks` | `id`, `division_id`, `title`, `status` ∈ {`belum`,`berjalan`,`selesai`,`tertunda`}, `start_date`, `end_date` (tanggal target selesai; dulu `due_date`), `description` (≤ 2000), `created_by`, `created_at`, `updated_at` | |
+| `task_evidence` | `id`, `task_id` (ON DELETE CASCADE), `filename`, `mime` ∈ {jpeg, png, webp, pdf}, `size_bytes` (1..5 MB), `data` (BYTEA), `uploaded_by`, `created_at` | bukti pekerjaan; jenis dari isi berkas, ≤ 5 berkas per pekerjaan (ADR-0012) |
 | `task_notes` | `id`, `task_id`, `author_id`, `note`, `created_at` | catatan progres (append-only) |
 
 ## Retensi (ADR-0007)

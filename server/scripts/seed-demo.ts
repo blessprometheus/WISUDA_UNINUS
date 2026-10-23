@@ -133,7 +133,7 @@ async function seedTimeline(): Promise<void> {
     if (existing.rowCount) continue;
     for (const [title, status, offset] of tasks) {
       await pool.query(
-        "INSERT INTO tasks (division_id, title, status, due_date, created_by) VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO tasks (division_id, title, status, end_date, created_by) VALUES ($1, $2, $3, $4, $5)",
         [divisionId, title, status, offset === null ? null : day(offset), ownerId],
       );
     }

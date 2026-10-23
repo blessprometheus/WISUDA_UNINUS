@@ -16,7 +16,7 @@ import {
   useLoad,
   when,
 } from "@/components/admin/ui";
-import { api, type Role } from "@/lib/api";
+import { api, uploadEvidence, type Role } from "@/lib/api";
 
 type Status = "belum" | "berjalan" | "selesai" | "tertunda";
 
@@ -51,9 +51,20 @@ interface Task {
   id: number;
   title: string;
   status: Status;
-  due_date: string | null;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
   overdue: boolean;
   note_count: number;
+  evidence_count: number;
+}
+interface EvidenceItem {
+  id: number;
+  filename: string;
+  mime: string;
+  size_bytes: number;
+  created_at: string;
+  uploaded_by: string;
 }
 interface Note {
   id: number;
@@ -152,6 +163,212 @@ function Notes({
   );
 }
 
+interface TaskForm {
+  title: string;
+  status: Status;
+  start: string;
+  end: string;
+  description: string;
+}
+
+const EMPTY_FORM: TaskForm = { title: "", status: "belum", start: "", end: "", description: "" };
+
+/** Pesan galat form (null = valid). Server tetap memeriksa ulang. */
+function formProblem(form: TaskForm): string | null {
+  if (!form.title.trim()) return "Judul pekerjaan wajib diisi.";
+  if (form.start && form.end && form.end < form.start) {
+    return "Tanggal selesai tidak boleh sebelum tanggal mulai.";
+  }
+  return null;
+}
+
+function dateLabel(value: string | null): string {
+  if (!value) return "—";
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y!, m! - 1, d!).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function periodLabel(start: string | null, end: string | null): string {
+  if (start && end) return `${dateLabel(start)} – ${dateLabel(end)}`;
+  if (end) return `s.d. ${dateLabel(end)}`;
+  if (start) return `mulai ${dateLabel(start)}`;
+  return "—";
+}
+
+function sizeLabel(bytes: number): string {
+  return bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Kolom isian pekerjaan yang dipakai bersama oleh form tambah dan form ubah. */
+function TaskFields({ value, onChange }: { value: TaskForm; onChange: (next: TaskForm) => void }) {
+  const set = <K extends keyof TaskForm>(key: K, next: TaskForm[K]) =>
+    onChange({ ...value, [key]: next });
+  return (
+    <>
+      <div className="sm:col-span-2">
+        <Field label="Judul pekerjaan">
+          <input
+            required
+            maxLength={200}
+            value={value.title}
+            onChange={(e) => set("title", e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+      <Field label="Status pekerjaan">
+        <select
+          value={value.status}
+          onChange={(e) => set("status", e.target.value as Status)}
+          className={inputClass}
+        >
+          {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
+            <option key={s} value={s}>
+              {STATUS_LABEL[s]}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <div className="grid gap-3 sm:col-span-4 sm:grid-cols-2">
+        <Field label="Tanggal mulai">
+          <input
+            type="date"
+            value={value.start}
+            onChange={(e) => set("start", e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Tanggal selesai">
+          <input
+            type="date"
+            value={value.end}
+            onChange={(e) => set("end", e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+      <div className="sm:col-span-4">
+        <Field label="Deskripsi">
+          <textarea
+            rows={3}
+            maxLength={2000}
+            value={value.description}
+            onChange={(e) => set("description", e.target.value)}
+            className={`${inputClass} py-2`}
+          />
+        </Field>
+      </div>
+    </>
+  );
+}
+
+function payload(form: TaskForm) {
+  return {
+    title: form.title.trim(),
+    status: form.status,
+    start_date: form.start || null,
+    end_date: form.end || null,
+    description: form.description.trim() || null,
+  };
+}
+
+function Evidence({
+  taskId,
+  canWrite,
+  onChanged,
+}: {
+  taskId: number;
+  canWrite: boolean;
+  onChanged: () => void;
+}) {
+  const list = useLoad<EvidenceItem[]>(`/api/v1/timeline/tasks/${taskId}/evidence`);
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const add = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!file) return;
+    setBusy(true);
+    const res = await uploadEvidence(taskId, file);
+    setBusy(false);
+    if (!res.ok) return setError(res.message ?? "Gagal mengunggah bukti.");
+    setFile(null);
+    setError(null);
+    (event.target as HTMLFormElement).reset();
+    list.reload();
+    onChanged();
+  };
+
+  const remove = async (item: EvidenceItem) => {
+    if (!window.confirm(`Hapus bukti "${item.filename}"?`)) return;
+    const res = await api("POST", `/api/v1/timeline/evidence/${item.id}/delete`);
+    if (!res.ok) return setError(res.message ?? "Gagal menghapus bukti.");
+    setError(null);
+    list.reload();
+    onChanged();
+  };
+
+  return (
+    <div className="grid gap-3 bg-mist-bg/60 p-4">
+      {canWrite && (
+        <form onSubmit={add} className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+          <Field label="Tambah bukti">
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className={`${inputClass} py-2`}
+            />
+          </Field>
+          <button type="submit" disabled={!file || busy} className={btnPrimary}>
+            {busy ? "Mengunggah…" : "Unggah"}
+          </button>
+          <p className="text-[13px] text-ink-muted sm:col-span-2">
+            JPG, PNG, WebP, atau PDF; maksimal 5 MB per berkas dan 5 berkas per pekerjaan.
+          </p>
+        </form>
+      )}
+      {error && <Notice kind="error">{error}</Notice>}
+      {list.loading && <p>Memuat…</p>}
+      {list.data?.length === 0 && <p className="text-[14px] text-ink-muted">Belum ada bukti.</p>}
+      <ul className="grid gap-2">
+        {list.data?.map((item) => (
+          <li
+            key={item.id}
+            className="flex flex-wrap items-center justify-between gap-2 rounded border border-forest-900/10 bg-white p-3"
+          >
+            <div className="min-w-0">
+              <a
+                href={`/api/v1/timeline/evidence/${item.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all font-semibold underline underline-offset-2"
+              >
+                {item.filename}
+              </a>
+              <p className="text-[12px] text-ink-muted">
+                {sizeLabel(item.size_bytes)} · {item.uploaded_by} · {when(item.created_at)}
+              </p>
+            </div>
+            {canWrite && (
+              <button type="button" className={btnGhost} onClick={() => remove(item)}>
+                Hapus
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function TaskRow({
   task,
   canWrite,
@@ -160,50 +377,67 @@ function TaskRow({
 }: {
   task: Task;
   canWrite: boolean;
-  /** Isi catatan hanya untuk divisinya sendiri (koordinator), atau semua divisi (ketua, superadmin). */
+  /** Isi catatan dan bukti hanya untuk divisinya sendiri (koordinator), atau semua divisi (ketua, superadmin). */
   canReadNotes: boolean;
   onChanged: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<"notes" | "evidence" | null>(null);
   const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(task.title);
-  const [status, setStatus] = useState<Status>(task.status);
-  const [due, setDue] = useState(task.due_date ?? "");
+  const [form, setForm] = useState<TaskForm>({
+    title: task.title,
+    status: task.status,
+    start: task.start_date ?? "",
+    end: task.end_date ?? "",
+    description: task.description ?? "",
+  });
   const [error, setError] = useState<string | null>(null);
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
-    const res = await api("PUT", `/api/v1/timeline/tasks/${task.id}`, {
-      title,
-      status,
-      due_date: due || null,
-    });
+    const problem = formProblem(form);
+    if (problem) return setError(problem);
+    const res = await api("PUT", `/api/v1/timeline/tasks/${task.id}`, payload(form));
     if (!res.ok) return setError(res.message ?? "Gagal menyimpan.");
     setEditing(false);
     setError(null);
     onChanged();
   };
 
+  const toggle = (panel: "notes" | "evidence") => setOpen((v) => (v === panel ? null : panel));
+
   return (
     <>
       <tr className={task.overdue ? "bg-[#fdecea]/60" : ""}>
         <Td>
           <strong>{task.title}</strong>
+          {task.description && (
+            <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-[13px] text-ink-muted">
+              {task.description}
+            </p>
+          )}
         </Td>
         <Td>
           <Badge tone={STATUS_TONE[task.status]}>{STATUS_LABEL[task.status]}</Badge>
         </Td>
         <Td className="whitespace-nowrap">
-          {task.due_date ?? "—"} {task.overdue && <Badge tone="red">terlambat</Badge>}
+          {periodLabel(task.start_date, task.end_date)}{" "}
+          {task.overdue && <Badge tone="red">terlambat</Badge>}
         </Td>
         <Td>
-          <span className="flex flex-wrap gap-2">
+          <span className="flex flex-wrap items-center gap-2">
             {canReadNotes ? (
-              <button type="button" className={btnGhost} onClick={() => setOpen((v) => !v)}>
-                Catatan ({task.note_count})
-              </button>
+              <>
+                <button type="button" className={btnGhost} onClick={() => toggle("notes")}>
+                  Catatan ({task.note_count})
+                </button>
+                <button type="button" className={btnGhost} onClick={() => toggle("evidence")}>
+                  Bukti ({task.evidence_count})
+                </button>
+              </>
             ) : (
-              <span className="text-[13px] text-ink-muted">{task.note_count} catatan</span>
+              <span className="text-[13px] text-ink-muted">
+                {task.note_count} catatan · {task.evidence_count} bukti
+              </span>
             )}
             {canWrite && (
               <button type="button" className={btnGhost} onClick={() => setEditing((v) => !v)}>
@@ -217,38 +451,7 @@ function TaskRow({
         <tr>
           <td colSpan={4} className="bg-mist-bg/60 p-4">
             <form onSubmit={save} className="grid gap-3 sm:grid-cols-4">
-              <div className="sm:col-span-2">
-                <Field label="Judul pekerjaan">
-                  <input
-                    required
-                    maxLength={200}
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className={inputClass}
-                  />
-                </Field>
-              </div>
-              <Field label="Status">
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as Status)}
-                  className={inputClass}
-                >
-                  {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Tenggat">
-                <input
-                  type="date"
-                  value={due}
-                  onChange={(e) => setDue(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
+              <TaskFields value={form} onChange={setForm} />
               <div className="sm:col-span-4">
                 <button type="submit" className={btnGold}>
                   Simpan
@@ -263,10 +466,17 @@ function TaskRow({
           </td>
         </tr>
       )}
-      {open && (
+      {open === "notes" && (
         <tr>
           <td colSpan={4} className="p-0">
             <Notes taskId={task.id} canWrite={canWrite} onChanged={onChanged} />
+          </td>
+        </tr>
+      )}
+      {open === "evidence" && (
+        <tr>
+          <td colSpan={4} className="p-0">
+            <Evidence taskId={task.id} canWrite={canWrite} onChanged={onChanged} />
           </td>
         </tr>
       )}
@@ -291,29 +501,48 @@ function Tasks({ role, initialDivision }: { role: Role; initialDivision: number 
     divisionId ? `/api/v1/timeline/tasks?division_id=${divisionId}` : null,
   );
 
-  const [title, setTitle] = useState("");
-  const [due, setDue] = useState("");
-  const [status, setStatus] = useState<Status>("belum");
+  const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
+  const [file, setFile] = useState<File | null>(null);
+  const [fileKey, setFileKey] = useState(0);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const add = async (event: FormEvent) => {
     event.preventDefault();
-    const res = await api("POST", "/api/v1/timeline/tasks", {
+    const problem = formProblem(form);
+    if (problem) return setError(problem);
+    setBusy(true);
+    setWarning(null);
+    const res = await api<{ id: number }>("POST", "/api/v1/timeline/tasks", {
       division_id: divisionId,
-      title,
-      status,
-      due_date: due || null,
+      ...payload(form),
     });
-    if (!res.ok) return setError(res.message ?? "Gagal menambah pekerjaan.");
-    setTitle("");
-    setDue("");
-    setStatus("belum");
+    if (!res.ok || !res.data) {
+      setBusy(false);
+      return setError(res.message ?? "Gagal menambah pekerjaan.");
+    }
+    // Bukti bersifat opsional. Bila unggahannya gagal, pekerjaan tetap tersimpan dan bukti bisa ditambah dari barisnya.
+    if (file) {
+      const uploaded = await uploadEvidence(res.data.id, file);
+      if (!uploaded.ok) {
+        setWarning(
+          `Pekerjaan tersimpan, tetapi bukti belum terunggah: ${uploaded.message ?? "gagal"}. Tambahkan lagi lewat tombol "Bukti" pada pekerjaan itu.`,
+        );
+      }
+    }
+    setBusy(false);
+    setForm(EMPTY_FORM);
+    setFile(null);
+    setFileKey((k) => k + 1);
     setError(null);
     tasks.reload();
     divisions.reload();
   };
 
-  if (divisions.loading) return <p>Memuat…</p>;
+  // Hanya pada pemuatan pertama. Pemuatan ulang (setelah menyimpan) tidak boleh membongkar daftar: panel catatan/bukti
+  // yang sedang terbuka dan pesan di form akan hilang.
+  if (divisions.loading && !divisions.data) return <p>Memuat…</p>;
   if (divisions.data?.length === 0) {
     return (
       <Notice kind="info">
@@ -352,46 +581,35 @@ function Tasks({ role, initialDivision }: { role: Role; initialDivision: number 
       {canWrite && divisionId && (
         <Card title="Tambah pekerjaan">
           <form onSubmit={add} className="grid gap-3 sm:grid-cols-4">
-            <div className="sm:col-span-2">
-              <Field label="Judul pekerjaan">
+            <TaskFields value={form} onChange={setForm} />
+            <div className="sm:col-span-4">
+              <Field label="Upload bukti (opsional)">
                 <input
-                  required
-                  maxLength={200}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className={inputClass}
+                  key={fileKey}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  className={`${inputClass} py-2`}
                 />
               </Field>
+              <p className="mt-1 text-[13px] text-ink-muted">
+                JPG, PNG, WebP, atau PDF; maksimal 5 MB. Bukti lain dapat ditambahkan nanti
+                (maksimal 5 berkas per pekerjaan).
+              </p>
             </div>
-            <Field label="Status awal">
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as Status)}
-                className={inputClass}
-              >
-                {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
-                  <option key={s} value={s}>
-                    {STATUS_LABEL[s]}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Tenggat">
-              <input
-                type="date"
-                value={due}
-                onChange={(e) => setDue(e.target.value)}
-                className={inputClass}
-              />
-            </Field>
             <div className="sm:col-span-4">
-              <button type="submit" className={btnPrimary}>
-                Tambah
+              <button type="submit" disabled={busy} className={btnPrimary}>
+                {busy ? "Menyimpan…" : "Tambah"}
               </button>
             </div>
             {error && (
               <div className="sm:col-span-4">
                 <Notice kind="error">{error}</Notice>
+              </div>
+            )}
+            {warning && (
+              <div className="sm:col-span-4">
+                <Notice kind="info">{warning}</Notice>
               </div>
             )}
           </form>
@@ -402,7 +620,7 @@ function Tasks({ role, initialDivision }: { role: Role; initialDivision: number 
         {tasks.error && <Notice kind="error">{tasks.error}</Notice>}
         {tasks.loading && <p>Memuat…</p>}
         {tasks.data && (
-          <Table head={["Pekerjaan", "Status", "Tenggat", "Aksi"]}>
+          <Table head={["Pekerjaan", "Status", "Periode", "Aksi"]}>
             {tasks.data.map((t) => (
               <TaskRow
                 key={t.id}

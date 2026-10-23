@@ -5,6 +5,12 @@ import { requireAuth } from "../auth/guard.js";
 import type { AuthContext, Role } from "../auth/session.js";
 import { pool } from "../db.js";
 import { fail, ok } from "../http.js";
+import {
+  MAX_EVIDENCE_BYTES,
+  MAX_EVIDENCE_PER_TASK,
+  detectEvidenceType,
+  safeEvidenceName,
+} from "../lib/evidence.js";
 import { body, params, positiveId, query, str } from "../lib/params.js";
 
 const READ_ROLES: readonly Role[] = ["superadmin", "ketua", "koordinator"];
@@ -56,6 +62,41 @@ function isStatus(value: unknown): value is Status {
   return typeof value === "string" && (STATUSES as readonly string[]).includes(value);
 }
 
+interface TaskInput {
+  title: string;
+  status: Status;
+  startDate: string | null;
+  endDate: string | null;
+  description: string | null;
+}
+
+/** Validasi masukan pekerjaan (D50). `defaultStatus` hanya untuk pembuatan; pada perubahan, status wajib. */
+function readTaskInput(b: Record<string, unknown>, defaultStatus?: Status): TaskInput | string {
+  const title = str(b.title, 200);
+  const status = b.status === undefined ? defaultStatus : b.status;
+  // Tanggal tidak dikirim = tidak diisi (null); dikirim tetapi salah format = tidak valid (undefined).
+  const startDate = b.start_date === undefined ? null : parseDate(b.start_date);
+  const endDate = b.end_date === undefined ? null : parseDate(b.end_date);
+  const rawDescription = b.description;
+  if (!title) return "Judul pekerjaan wajib diisi (maksimal 200 karakter).";
+  if (!isStatus(status)) return "Status pekerjaan tidak valid.";
+  if (startDate === undefined) return "Tanggal mulai tidak valid.";
+  if (endDate === undefined) return "Tanggal selesai tidak valid.";
+  if (startDate && endDate && endDate < startDate) {
+    return "Tanggal selesai tidak boleh sebelum tanggal mulai.";
+  }
+  if (
+    rawDescription !== undefined &&
+    rawDescription !== null &&
+    (typeof rawDescription !== "string" || rawDescription.length > 2000)
+  ) {
+    return "Deskripsi maksimal 2000 karakter.";
+  }
+  const description =
+    typeof rawDescription === "string" && rawDescription.trim() ? rawDescription.trim() : null;
+  return { title, status, startDate, endDate, description };
+}
+
 /** Untuk koordinator yang mencoba divisi lain, jawaban sengaja sama dengan "tidak ditemukan". */
 async function guardDivision(
   request: FastifyRequest,
@@ -78,6 +119,14 @@ async function guardDivision(
 }
 
 export async function registerTimelineRoutes(app: FastifyInstance): Promise<void> {
+  // Berkas bukti dikirim sebagai isi mentah dengan Content-Type gambar/PDF (tanpa multipart: tanpa dependensi baru).
+  // Jenis sebenarnya ditentukan dari isi berkas di rute unggah; header ini hanya agar Fastify mau menerima isinya.
+  app.addContentTypeParser(
+    ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+    { parseAs: "buffer", bodyLimit: MAX_EVIDENCE_BYTES },
+    (_request, payload, done) => done(null, payload),
+  );
+
   // ---------- Divisi ----------
   app.get("/api/v1/timeline/divisions", async (request, reply) => {
     const auth = await requireAuth(request, reply, READ_ROLES);
@@ -90,7 +139,7 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
               COUNT(t.id) FILTER (WHERE t.status = 'berjalan')::int AS berjalan,
               COUNT(t.id) FILTER (WHERE t.status = 'tertunda')::int AS tertunda,
               COUNT(t.id) FILTER (WHERE t.status = 'belum')::int AS belum,
-              COUNT(t.id) FILTER (WHERE t.status <> 'selesai' AND t.due_date < ${TODAY_WIB})::int AS terlambat,
+              COUNT(t.id) FILTER (WHERE t.status <> 'selesai' AND t.end_date < ${TODAY_WIB})::int AS terlambat,
               ${MINE} AS mine
          FROM divisions d
          LEFT JOIN tasks t ON t.division_id = d.id
@@ -103,16 +152,20 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
   // ---------- Pekerjaan ----------
   app.get("/api/v1/timeline/tasks", async (request, reply) => {
     const divisionId = positiveId(query(request).division_id);
-    // Daftar pekerjaan (judul, status, tenggat, jumlah catatan) dapat dilihat semua peran pembaca (D46).
+    // Daftar pekerjaan (judul, status, tanggal, deskripsi, jumlah catatan dan bukti) dapat dilihat semua peran pembaca
+    // (D46, D50). ISI catatan dan berkas bukti hanya untuk divisinya sendiri, ketua, dan superadmin.
     const auth = await requireAuth(request, reply, READ_ROLES);
     if (!auth) return reply;
     if (!divisionId) return fail(reply, 422, "Divisi tidak valid.");
     const result = await pool.query(
-      `SELECT t.id, t.division_id, t.title, t.status, to_char(t.due_date, 'YYYY-MM-DD') AS due_date,
-              (t.status <> 'selesai' AND t.due_date < ${TODAY_WIB}) AS overdue,
-              t.updated_at, (SELECT COUNT(*)::int FROM task_notes n WHERE n.task_id = t.id) AS note_count
+      `SELECT t.id, t.division_id, t.title, t.status, t.description,
+              to_char(t.start_date, 'YYYY-MM-DD') AS start_date, to_char(t.end_date, 'YYYY-MM-DD') AS end_date,
+              (t.status <> 'selesai' AND t.end_date < ${TODAY_WIB}) AS overdue,
+              t.updated_at,
+              (SELECT COUNT(*)::int FROM task_notes n WHERE n.task_id = t.id) AS note_count,
+              (SELECT COUNT(*)::int FROM task_evidence e WHERE e.task_id = t.id) AS evidence_count
          FROM tasks t WHERE t.division_id = $1
-        ORDER BY (t.status = 'selesai'), t.due_date NULLS LAST, t.id`,
+        ORDER BY (t.status = 'selesai'), t.end_date NULLS LAST, t.start_date NULLS LAST, t.id`,
       [divisionId],
     );
     return ok(reply, result.rows);
@@ -123,14 +176,20 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
     const divisionId = positiveId(b.division_id);
     const auth = await guardDivision(request, reply, WRITE_ROLES, divisionId, true);
     if (!auth) return reply;
-    const title = str(b.title, 200);
-    const status = b.status === undefined ? "belum" : b.status;
-    const due = parseDate(b.due_date);
-    if (!title || !isStatus(status) || due === undefined)
-      return fail(reply, 422, "Isi judul, status, dan tenggat yang valid.");
+    const input = readTaskInput(b, "belum");
+    if (typeof input === "string") return fail(reply, 422, input);
     const result = await pool.query<{ id: number }>(
-      "INSERT INTO tasks (division_id, title, status, due_date, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [divisionId, title, status, due, auth.user.id],
+      `INSERT INTO tasks (division_id, title, status, start_date, end_date, description, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [
+        divisionId,
+        input.title,
+        input.status,
+        input.startDate,
+        input.endDate,
+        input.description,
+        auth.user.id,
+      ],
     );
     const id = result.rows[0]!.id;
     await audit(request, auth.user.id, "task_created", { entity: "tasks", entityId: id });
@@ -143,19 +202,17 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
     if (id && !divisionId) return fail(reply, 404, "Pekerjaan tidak ditemukan.");
     const auth = await guardDivision(request, reply, WRITE_ROLES, divisionId, true);
     if (!auth || !id) return reply;
-    const b = body(request);
-    const title = str(b.title, 200);
-    const due = parseDate(b.due_date);
-    if (!title || !isStatus(b.status) || due === undefined)
-      return fail(reply, 422, "Isi judul, status, dan tenggat yang valid.");
+    const input = readTaskInput(body(request));
+    if (typeof input === "string") return fail(reply, 422, input);
     await pool.query(
-      "UPDATE tasks SET title = $2, status = $3, due_date = $4, updated_at = NOW() WHERE id = $1",
-      [id, title, b.status, due],
+      `UPDATE tasks SET title = $2, status = $3, start_date = $4, end_date = $5, description = $6,
+              updated_at = NOW() WHERE id = $1`,
+      [id, input.title, input.status, input.startDate, input.endDate, input.description],
     );
     await audit(request, auth.user.id, "task_updated", {
       entity: "tasks",
       entityId: id,
-      detail: { status: b.status },
+      detail: { status: input.status },
     });
     return ok(reply, { id });
   });
@@ -203,6 +260,135 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
     return ok(reply.code(201), { id: result.rows[0]!.id });
   });
 
+  // ---------- Bukti pekerjaan (D50) ----------
+  // Berkas dikirim sebagai isi mentah (tanpa multipart). Jenis ditentukan dari isi berkas, bukan dari nama atau
+  // Content-Type; ukuran ≤ 5 MB; maksimal 5 berkas per pekerjaan. Akses = sama dengan ISI catatan (divisi sendiri,
+  // ketua, superadmin); menulis dan menghapus hanya superadmin dan koordinator divisi itu.
+  app.get("/api/v1/timeline/tasks/:id/evidence", async (request, reply) => {
+    const id = positiveId(params(request).id);
+    const divisionId = id ? await taskDivision(id) : null;
+    if (id && !divisionId) return fail(reply, 404, "Pekerjaan tidak ditemukan.");
+    const auth = await guardDivision(request, reply, READ_ROLES, divisionId, false);
+    if (!auth) return reply;
+    const result = await pool.query(
+      `SELECT e.id, e.filename, e.mime, e.size_bytes, e.created_at, u.name AS uploaded_by
+         FROM task_evidence e JOIN users u ON u.id = e.uploaded_by WHERE e.task_id = $1 ORDER BY e.id`,
+      [id],
+    );
+    return ok(reply, result.rows);
+  });
+
+  app.post(
+    "/api/v1/timeline/tasks/:id/evidence",
+    { bodyLimit: MAX_EVIDENCE_BYTES, config: { rateLimit: { max: 30, timeWindow: "10 minutes" } } },
+    async (request, reply) => {
+      const id = positiveId(params(request).id);
+      const divisionId = id ? await taskDivision(id) : null;
+      if (id && !divisionId) return fail(reply, 404, "Pekerjaan tidak ditemukan.");
+      const auth = await guardDivision(request, reply, WRITE_ROLES, divisionId, true);
+      if (!auth || !id) return reply;
+      if (!Buffer.isBuffer(request.body) || request.body.length === 0) {
+        return fail(reply, 422, "Kirim isi berkas (JPG, PNG, WebP, atau PDF).");
+      }
+      const data = request.body;
+      const type = detectEvidenceType(data);
+      if (!type) {
+        return fail(reply, 422, "Jenis berkas tidak didukung. Gunakan JPG, PNG, WebP, atau PDF.");
+      }
+      const filename = safeEvidenceName(request.headers["x-filename"], type);
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        // Kunci baris pekerjaan agar batas jumlah tidak terlewati oleh unggahan serentak.
+        await client.query("SELECT 1 FROM tasks WHERE id = $1 FOR UPDATE", [id]);
+        const count = await client.query<{ n: number }>(
+          "SELECT COUNT(*)::int AS n FROM task_evidence WHERE task_id = $1",
+          [id],
+        );
+        if ((count.rows[0]?.n ?? 0) >= MAX_EVIDENCE_PER_TASK) {
+          await client.query("ROLLBACK");
+          return fail(reply, 409, `Maksimal ${MAX_EVIDENCE_PER_TASK} berkas bukti per pekerjaan.`);
+        }
+        const saved = await client.query<{ id: number }>(
+          `INSERT INTO task_evidence (task_id, filename, mime, size_bytes, data, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [id, filename, type.mime, data.length, data, auth.user.id],
+        );
+        await client.query("UPDATE tasks SET updated_at = NOW() WHERE id = $1", [id]);
+        await client.query("COMMIT");
+        const evidenceId = saved.rows[0]!.id;
+        await audit(request, auth.user.id, "task_evidence_added", {
+          entity: "tasks",
+          entityId: id,
+          detail: { evidence_id: evidenceId, mime: type.mime, size_bytes: data.length },
+        });
+        return ok(reply.code(201), {
+          id: evidenceId,
+          filename,
+          mime: type.mime,
+          size_bytes: data.length,
+        });
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+  );
+
+  app.get("/api/v1/timeline/evidence/:evidenceId", async (request, reply) => {
+    const evidenceId = positiveId(params(request).evidenceId);
+    const found = evidenceId
+      ? await pool.query<{ division_id: number; filename: string; mime: string; data: Buffer }>(
+          `SELECT t.division_id, e.filename, e.mime, e.data
+             FROM task_evidence e JOIN tasks t ON t.id = e.task_id WHERE e.id = $1`,
+          [evidenceId],
+        )
+      : null;
+    const row = found?.rows[0];
+    if (evidenceId && !row) return fail(reply, 404, "Bukti tidak ditemukan.");
+    const auth = await guardDivision(request, reply, READ_ROLES, row?.division_id ?? null, false);
+    if (!auth || !row) return reply;
+    const image = row.mime.startsWith("image/");
+    const asciiName = row.filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+    const encodedName = encodeURIComponent(row.filename);
+    return (
+      reply
+        .header("Content-Type", row.mime)
+        // Gambar boleh dibuka di tab; PDF diunduh agar tidak dijalankan di dalam situs. CSP sandbox menetralkan isi.
+        .header(
+          "Content-Disposition",
+          `${image ? "inline" : "attachment"}; filename="${asciiName}"; filename*=UTF-8''${encodedName}`,
+        )
+        .header("Content-Security-Policy", "sandbox; default-src 'none'")
+        .header("X-Content-Type-Options", "nosniff")
+        .header("Cache-Control", "private, no-store")
+        .send(row.data)
+    );
+  });
+
+  app.post("/api/v1/timeline/evidence/:evidenceId/delete", async (request, reply) => {
+    const evidenceId = positiveId(params(request).evidenceId);
+    const found = evidenceId
+      ? await pool.query<{ task_id: number; division_id: number }>(
+          `SELECT e.task_id, t.division_id FROM task_evidence e JOIN tasks t ON t.id = e.task_id WHERE e.id = $1`,
+          [evidenceId],
+        )
+      : null;
+    const row = found?.rows[0];
+    if (evidenceId && !row) return fail(reply, 404, "Bukti tidak ditemukan.");
+    const auth = await guardDivision(request, reply, WRITE_ROLES, row?.division_id ?? null, true);
+    if (!auth || !row || !evidenceId) return reply;
+    await pool.query("DELETE FROM task_evidence WHERE id = $1", [evidenceId]);
+    await audit(request, auth.user.id, "task_evidence_deleted", {
+      entity: "tasks",
+      entityId: row.task_id,
+      detail: { evidence_id: evidenceId },
+    });
+    return ok(reply, { id: evidenceId });
+  });
+
   // ---------- Laporan progres (beranda): semua peran pembaca, termasuk koordinator (D46) ----------
   app.get("/api/v1/timeline/report", async (request, reply) => {
     const auth = await requireAuth(request, reply, READ_ROLES);
@@ -217,14 +403,14 @@ export async function registerTimelineRoutes(app: FastifyInstance): Promise<void
                 COUNT(t.id) FILTER (WHERE t.status = 'berjalan')::int AS berjalan,
                 COUNT(t.id) FILTER (WHERE t.status = 'tertunda')::int AS tertunda,
                 COUNT(t.id) FILTER (WHERE t.status = 'belum')::int AS belum,
-                COUNT(t.id) FILTER (WHERE t.status <> 'selesai' AND t.due_date < ${TODAY_WIB})::int AS terlambat,
-                to_char(MIN(t.due_date) FILTER (WHERE t.status <> 'selesai'), 'YYYY-MM-DD') AS tenggat_terdekat
+                COUNT(t.id) FILTER (WHERE t.status <> 'selesai' AND t.end_date < ${TODAY_WIB})::int AS terlambat,
+                to_char(MIN(t.end_date) FILTER (WHERE t.status <> 'selesai'), 'YYYY-MM-DD') AS tenggat_terdekat
            FROM divisions d LEFT JOIN tasks t ON t.division_id = d.id GROUP BY d.id ORDER BY d.name`,
         [auth.user.role === "superadmin", auth.user.id],
       ),
       pool.query<{ total: number; selesai: number; terlambat: number }>(
         `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE status = 'selesai')::int AS selesai,
-                COUNT(*) FILTER (WHERE status <> 'selesai' AND due_date < ${TODAY_WIB})::int AS terlambat FROM tasks`,
+                COUNT(*) FILTER (WHERE status <> 'selesai' AND end_date < ${TODAY_WIB})::int AS terlambat FROM tasks`,
       ),
       pool.query(
         `SELECT n.id, n.note, n.created_at, u.name AS author, t.title AS task_title, d.name AS division
