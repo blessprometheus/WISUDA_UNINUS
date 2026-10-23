@@ -50,6 +50,11 @@
   min-width: 0;
 }
 
+/* Kartu biasa terakhir yang tinggal sendiri di baris (jumlah kartu ganjil) memenuhi lebar penuh. */
+.secondaryItem:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .card {
   position: relative;
   display: flex;

@@ -7,7 +7,7 @@ import styles from "@/components/ArchiveGallery.module.css";
 
 export const metadata: Metadata = {
   title: "Arsip Wisuda ke-69",
-  description: "Galeri foto, e-book, dan survei kepuasan Wisuda ke-69 Universitas Islam Nusantara.",
+  description: "Galeri foto dan e-book Wisuda ke-69 Universitas Islam Nusantara.",
   alternates: { canonical: "/arsip/69" },
 };
 

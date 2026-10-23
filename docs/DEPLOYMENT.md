@@ -205,7 +205,7 @@ curl -sI https://HOST/galeri69.html | grep -i -E "^HTTP|^location"   # 308 + loc
 curl -sI https://HOST/ | grep -i "x-powered-by" || echo "OK: tidak ada x-powered-by"
 ```
 
-Lalu buka di HP dan laptop; periksa tampilan, gembok HTTPS, dan tautan Survei.
+Lalu buka di HP dan laptop; periksa tampilan, gembok HTTPS, dan tautan arsip (galeri dan e-book).
 
 ### F. Memperbarui (setiap rilis berikutnya)
 

@@ -89,7 +89,7 @@ Belum ada fitur berstatus *Out of scope* — akan diisi bila ada yang ditolak se
 | **R1** | Minggu 19–25 Oktober 2026 (tanggal ditetapkan rektorat, **tidak dapat digeser**; tanggal pasti *Pending*) | Satu halaman informatif Wisuda ke-70, konten statis dari surat edaran, arah visual awal yang disetujui |
 | **R2a** | ± 26 Okt–1 Nov 2026 | Database + auth + **timeline minimal** (D14, D15) |
 | **R2b** | Siap di staging ± 27 Nov (usulan); QR dibuka ± 4 Des; **sebelum gladi (9 Des, resmi)** | Modul kehadiran QR (D7) + portal informasi lengkap; tanpa CMS |
-| **R3** | Setelah 10 Desember 2026 | Mode pasca-acara: galeri, e-book, survei + arsip lintas tahun |
+| **R3** | Setelah 10 Desember 2026 | Mode pasca-acara: galeri, e-book + arsip lintas tahun (survei kepuasan dihapus dari situs, D48) |
 
 ## 6. Acceptance criteria R1 (draft)
 
