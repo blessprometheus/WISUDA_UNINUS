@@ -7,6 +7,8 @@ export interface ArchiveLink {
   readonly label: string;
   /** `null` = tautan resmi belum dikonfirmasi (menunggu backup situs ke-69). */
   readonly href: string | null;
+  /** Kartu besar (mis. galeri). Kartu besar disusun berdampingan dua kolom di atas kartu biasa. */
+  readonly featured?: boolean;
 }
 
 export const siteConfig = {
@@ -27,8 +29,16 @@ export const siteConfig = {
 
 export const archive69Links: readonly ArchiveLink[] = [
   {
-    label: "Galeri Foto",
-    href: null,
+    label: "Galeri Gelombang\u00a01",
+    // Folder Google Drive "GEL 1" (dikonfirmasi pemilik proyek 23 Okt 2026; dicek terbuka tanpa login).
+    href: "https://drive.google.com/drive/folders/1FUn5eZAXhnlpt9ue1ZB3h7fB1sZnpsKc?usp=drive_link",
+    featured: true,
+  },
+  {
+    label: "Galeri Gelombang\u00a02",
+    // Folder Google Drive "GEL 2" (dikonfirmasi pemilik proyek 23 Okt 2026; dicek terbuka tanpa login).
+    href: "https://drive.google.com/drive/folders/1hwj3zNAThbnz2wnhCZvKwiY3hJyc6ac6?usp=drive_link",
+    featured: true,
   },
   {
     label: "E-Book Wisuda",

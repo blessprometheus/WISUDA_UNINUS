@@ -23,8 +23,8 @@ function ArrowIcon() {
 export function ArchiveList() {
   return (
     <ul className={styles.list} aria-label="Arsip Wisuda ke-69">
-      {archive69Links.map((link, index) => {
-        const featured = index === 0;
+      {archive69Links.map((link) => {
+        const featured = link.featured === true;
         const cardClass = [
           styles.card,
           featured ? styles.featured : styles.secondary,

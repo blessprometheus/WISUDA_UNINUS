@@ -45,10 +45,6 @@
   list-style: none;
 }
 
-.featuredItem {
-  grid-column: 1 / -1;
-}
-
 .featuredItem,
 .secondaryItem {
   min-width: 0;
