@@ -192,7 +192,11 @@ export async function registerReportRoutes(app: FastifyInstance): Promise<void> 
       await client.query("BEGIN");
       const students = await client.query(
         `UPDATE students SET name = '[dianonimkan]', nim = 'ANON-' || id, cohort_year = NULL,
-                graduation_date_text = NULL, is_active = FALSE, anonymized_at = NOW(),
+                graduation_date_text = NULL, eligibility_note = NULL,
+                gender = NULL, toga_size = NULL, birth_place = NULL, birth_date = NULL,
+                phone = NULL, email = NULL, gpa = NULL, graduation_date = NULL,
+                thesis_title = NULL, photo_mime = NULL, photo_bytes = NULL, photo_data = NULL,
+                is_active = FALSE, anonymized_at = NOW(),
                 attendance_token = replace(gen_random_uuid()::text, '-', ''), updated_at = NOW()
           WHERE ceremony_id = $1 AND anonymized_at IS NULL`,
         [ceremonyId],

@@ -14,15 +14,22 @@ if (!["127.0.0.1", "localhost"].includes(url.hostname) || !/(dev|demo|test)/.tes
   throw new Error("seed-demo hanya boleh untuk database lokal yang namanya memuat dev/demo/test.");
 }
 
-const STUDENTS: Array<[string, string, string]> = [
-  ["20260001", "Ani Rekaan", "S1 Teknik Informatika"],
-  ["20260002", "Budi Rekaan", "S1 Manajemen"],
-  ["20260003", "Cici Rekaan", "S2 Ilmu Hukum"],
-  ["20260004", "Dedi Rekaan", "S1 Agroteknologi"],
-  ["20260005", "Eka Rekaan", "S1 Teknik Informatika"],
-  ["20260006", "Fani Rekaan", "S3 Ilmu Pendidikan"],
-  ["20260007", "Gita Rekaan", "S1 Manajemen"],
-  ["20260008", "Hadi Rekaan", "S2 Administrasi Pendidikan"],
+const STUDENTS: Array<[string, string, string, boolean, boolean, string | null]> = [
+  ["20260001", "Ani Rekaan", "S1 Teknik Informatika", true, true, null],
+  ["20260002", "Budi Rekaan", "S1 Manajemen", true, true, null],
+  ["20260003", "Cici Rekaan", "S2 Ilmu Hukum", false, true, "Tunggakan biaya wisuda Rp 500.000"],
+  ["20260004", "Dedi Rekaan", "S1 Agroteknologi", true, false, "Berkas yudisium belum diserahkan"],
+  [
+    "20260005",
+    "Eka Rekaan",
+    "S1 Teknik Informatika",
+    false,
+    false,
+    "Belum melunasi biaya & belum yudisium",
+  ],
+  ["20260006", "Fani Rekaan", "S3 Ilmu Pendidikan", true, true, null],
+  ["20260007", "Gita Rekaan", "S1 Manajemen", true, true, null],
+  ["20260008", "Hadi Rekaan", "S2 Administrasi Pendidikan", true, true, null],
 ];
 
 async function ensureUser(email: string, name: string, role: string): Promise<string | null> {
@@ -45,22 +52,36 @@ async function main(): Promise<void> {
   const ceremonyId = ceremony.rows[0]?.id;
   if (!ceremonyId) throw new Error("Jalankan npm run db:migrate dulu.");
 
-  for (const [nim, name, program] of STUDENTS) {
+  for (const [nim, name, program, isPaid, isYudisium, note] of STUDENTS) {
     await pool.query(
-      `INSERT INTO students (ceremony_id, nim, name, study_program, attendance_token)
-       VALUES ($1, $2, $3, $4, $5) ON CONFLICT (ceremony_id, nim) DO NOTHING`,
-      [ceremonyId, nim, name, program, randomBytes(16).toString("hex")],
+      `INSERT INTO students (ceremony_id, nim, name, study_program, is_paid, is_yudisium, eligibility_note, attendance_token)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (ceremony_id, nim) DO UPDATE SET
+         is_paid = EXCLUDED.is_paid,
+         is_yudisium = EXCLUDED.is_yudisium,
+         eligibility_note = EXCLUDED.eligibility_note`,
+      [ceremonyId, nim, name, program, isPaid, isYudisium, note, randomBytes(16).toString("hex")],
     );
   }
 
   const date = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
-  await pool.query(
-    `INSERT INTO attendance_sessions (ceremony_id, kind, name, event_date, starts_at, ends_at, is_active)
-     VALUES ($1, 'gladi', 'Gladi Resik (DEMO)', $2::date, $3, $4, TRUE)
-     ON CONFLICT (ceremony_id, event_date) DO UPDATE
-       SET starts_at = EXCLUDED.starts_at, ends_at = EXCLUDED.ends_at, is_active = TRUE, updated_at = NOW()`,
-    [ceremonyId, date, `${date}T00:00:00+07:00`, `${date}T23:59:59+07:00`],
+  await pool.query("UPDATE attendance_sessions SET is_active = FALSE WHERE is_active = TRUE");
+  const existingSession = await pool.query<{ id: number }>(
+    "SELECT id FROM attendance_sessions WHERE ceremony_id = $1 AND event_date = $2::date AND LOWER(name) = LOWER('Gladi Resik (DEMO)')",
+    [ceremonyId, date],
   );
+  if (existingSession.rows[0]) {
+    await pool.query(
+      "UPDATE attendance_sessions SET starts_at = $2, ends_at = $3, is_active = TRUE, updated_at = NOW() WHERE id = $1",
+      [existingSession.rows[0].id, `${date}T00:00:00+07:00`, `${date}T23:59:59+07:00`],
+    );
+  } else {
+    await pool.query(
+      `INSERT INTO attendance_sessions (ceremony_id, kind, name, event_date, starts_at, ends_at, is_active)
+       VALUES ($1, 'gladi', 'Gladi Resik (DEMO)', $2::date, $3, $4, TRUE)`,
+      [ceremonyId, date, `${date}T00:00:00+07:00`, `${date}T23:59:59+07:00`],
+    );
+  }
 
   console.log(
     `Wisudawan rekaan: ${STUDENTS.length} (NIM ${STUDENTS[0]![0]}–${STUDENTS.at(-1)![0]}).`,

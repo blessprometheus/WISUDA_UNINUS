@@ -34,6 +34,7 @@ interface Report {
   would_update?: number;
   inserted?: number;
   updated?: number;
+  unmatched_count?: number;
   batch_id?: number;
 }
 interface Batch {
@@ -68,7 +69,7 @@ function IssueList({
       <Table head={["Baris", "Kolom", "Masalah"]}>
         {items.slice(0, 100).map((issue, index) => (
           <tr key={index} className={tone === "error" ? "bg-[#fdecea]/60" : ""}>
-            <Td className="tabular-nums">{issue.row}</Td>
+            <Td className="tabular-nums">{issue.row || "—"}</Td>
             <Td>{issue.column}</Td>
             <Td>{issue.message}</Td>
           </tr>
@@ -84,12 +85,21 @@ function IssueList({
 }
 
 export function Importer() {
+  const [mode, setMode] = useState<"students" | "finance">("students");
   const [file, setFile] = useState<{ name: string; text: string } | null>(null);
   const [preview, setPreview] = useState<Report | null>(null);
   const [result, setResult] = useState<Report | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const batches = useLoad<Batch[]>("/api/v1/admin/import-batches");
+
+  const switchMode = (nextMode: "students" | "finance") => {
+    setMode(nextMode);
+    setFile(null);
+    setPreview(null);
+    setResult(null);
+    setError(null);
+  };
 
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const picked = event.target.files?.[0];
@@ -99,7 +109,9 @@ export function Importer() {
     if (!picked) return setFile(null);
     if (!picked.name.toLowerCase().endsWith(".csv")) {
       setFile(null);
-      return setError("Gunakan berkas .csv (CSV UTF-8). Dari Excel: Simpan Sebagai → CSV UTF-8.");
+      return setError(
+        "Gunakan berkas .csv (CSV UTF-8). Dari Excel / Google Sheets: Unduh / Simpan Sebagai → CSV UTF-8.",
+      );
     }
     if (picked.size > MAX_BYTES) {
       setFile(null);
@@ -112,11 +124,11 @@ export function Importer() {
     if (!file) return;
     setBusy(true);
     setError(null);
-    const res = await uploadCsv<Report>(
-      `/api/v1/admin/students/import${dryRun ? "?dry_run=1" : ""}`,
-      file.text,
-      file.name,
-    );
+    const endpoint =
+      mode === "students"
+        ? `/api/v1/admin/students/import${dryRun ? "?dry_run=1" : ""}`
+        : `/api/v1/admin/students/sync-finance${dryRun ? "?dry_run=1" : ""}`;
+    const res = await uploadCsv<Report>(endpoint, file.text, file.name);
     setBusy(false);
     if (!res.ok || !res.data) return setError(res.message ?? "Gagal memproses berkas.");
     if (dryRun) {
@@ -131,20 +143,61 @@ export function Importer() {
   const data = result ?? preview;
   return (
     <>
-      <PageTitle title="Impor Data Wisudawan" />
+      <PageTitle title="Impor & Sinkronisasi Spreadsheet" />
       <div className="grid gap-6">
-        <Notice kind="info">
-          Format <strong>CSV UTF-8</strong>. Kolom wajib: <code>NIM</code>, <code>NAMA</code>,{" "}
-          <code>PROGRAM STUDI</code>; opsional <code>ANGKATAN</code> dan <code>TANGGAL LULUS</code>.
-          Impor ulang <strong>aman</strong>: data diperbarui per NIM, tidak ada duplikat, dan{" "}
-          <strong>QR yang sudah dibagikan tidak berubah</strong>.{" "}
-          <a href="/template-impor-wisudawan.csv" download className="underline">
-            Unduh templat
-          </a>
-          .
-        </Notice>
+        {/* Tab Pilihan Mode Impor */}
+        <div className="flex flex-wrap gap-2 border-b border-forest-900/15 pb-3">
+          <button
+            type="button"
+            onClick={() => switchMode("students")}
+            className={mode === "students" ? btnPrimary : btnGhost}
+          >
+            1. Impor Data Dasar Wisudawan (BAAK + Kelayakan)
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode("finance")}
+            className={mode === "finance" ? btnPrimary : btnGhost}
+          >
+            2. Sinkronisasi Cepat Spreadsheet Keuangan & Yudisium
+          </button>
+        </div>
 
-        <Card title="1. Pilih berkas, 2. Periksa, 3. Impor">
+        {mode === "students" ? (
+          <Notice kind="info">
+            Format <strong>CSV UTF-8</strong>. Kolom wajib: <code>NIM</code>, <code>NAMA</code>,{" "}
+            <code>PROGRAM STUDI</code>; opsional: <code>ANGKATAN</code>, <code>TANGGAL LULUS</code>,{" "}
+            <code>PEMBAYARAN</code> (<code>LUNAS</code>/<code>BELUM</code>), <code>YUDISIUM</code> (
+            <code>SUDAH</code>/<code>BELUM</code>), dan <code>CATATAN</code>. Impor ulang{" "}
+            <strong>aman</strong>: data diperbarui per NIM dan{" "}
+            <strong>QR yang sudah dibagikan tidak berubah</strong>.{" "}
+            <a href="/template-impor-wisudawan.csv" download className="font-bold underline">
+              Unduh templat lengkap
+            </a>
+            .
+          </Notice>
+        ) : (
+          <Notice kind="info">
+            <strong>Integrasi Spreadsheet Keuangan & Yudisium:</strong> Ekspor Google Sheets / Excel
+            bagian keuangan sebagai <strong>CSV UTF-8</strong> yang cukup memuat kolom{" "}
+            <code>NIM</code> serta <code>PEMBAYARAN</code> (<code>LUNAS</code>/<code>BELUM</code>),{" "}
+            <code>YUDISIUM</code> (<code>SUDAH</code>/<code>BELUM</code>), atau <code>CATATAN</code>{" "}
+            (tanpa perlu kolom Nama/Prodi). Status kelayakan peserta di dashboard akan langsung
+            diperbarui otomatis!{" "}
+            <a href="/template-sinkron-keuangan.csv" download className="font-bold underline">
+              Unduh templat spreadsheet keuangan
+            </a>
+            .
+          </Notice>
+        )}
+
+        <Card
+          title={
+            mode === "students"
+              ? "Impor Data Peserta Wisudawan: 1. Pilih berkas, 2. Periksa, 3. Impor"
+              : "Sinkronisasi Spreadsheet Keuangan & Yudisium: 1. Pilih berkas, 2. Periksa, 3. Sinkronkan"
+          }
+        >
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex min-h-11 cursor-pointer items-center rounded border-2 border-dashed border-forest-900/40 px-4 text-[14px] font-bold hover:bg-forest-900/5">
               <input type="file" accept=".csv,text/csv" onChange={onFile} className="sr-only" />
@@ -164,7 +217,7 @@ export function Importer() {
               onClick={() => run(false)}
               className={btnGold}
             >
-              Impor sekarang
+              {mode === "students" ? "Impor sekarang" : "Sinkronkan status sekarang"}
             </button>
             <button
               type="button"
@@ -187,22 +240,29 @@ export function Importer() {
         </Card>
 
         {data && (
-          <Card title={result ? "Hasil impor" : "Hasil pemeriksaan (belum ada yang disimpan)"}>
+          <Card title={result ? "Hasil pemrosesan" : "Hasil pemeriksaan (belum disimpan)"}>
             <div className="mb-5 flex flex-wrap gap-2">
               <Badge tone="gray">{data.total_rows} baris</Badge>
               <Badge tone="green">{data.valid_rows} valid</Badge>
               <Badge tone={data.error_count ? "red" : "gray"}>{data.error_count} bermasalah</Badge>
               {result ? (
                 <>
-                  <Badge tone="green">{result.inserted} baru</Badge>
+                  {result.inserted !== undefined && (
+                    <Badge tone="green">{result.inserted} baru</Badge>
+                  )}
                   <Badge tone="gold">{result.updated} diperbarui</Badge>
                 </>
               ) : (
                 <>
-                  <Badge tone="green">{data.would_insert} akan ditambah</Badge>
+                  {data.would_insert !== undefined && (
+                    <Badge tone="green">{data.would_insert} akan ditambah</Badge>
+                  )}
                   <Badge tone="gold">{data.would_update} akan diperbarui</Badge>
                 </>
               )}
+              {data.unmatched_count ? (
+                <Badge tone="red">{data.unmatched_count} NIM belum terdaftar</Badge>
+              ) : null}
             </div>
             {data.ignored_columns.length > 0 && (
               <p className="mb-4 text-[14px] text-ink-muted">
@@ -212,8 +272,8 @@ export function Importer() {
             {!result && data.error_count > 0 && (
               <div className="mb-4">
                 <Notice kind="error">
-                  Baris bermasalah <strong>tidak akan diimpor</strong>. Perbaiki di berkas sumber
-                  lalu periksa lagi, atau impor baris yang valid saja.
+                  Baris bermasalah <strong>tidak akan diproses</strong>. Perbaiki di berkas sumber
+                  lalu periksa lagi, atau lanjutkan baris yang valid saja.
                 </Notice>
               </div>
             )}
@@ -224,7 +284,7 @@ export function Importer() {
           </Card>
         )}
 
-        <Card title="Riwayat impor">
+        <Card title="Riwayat impor data wisudawan">
           {batches.loading && <p>Memuat…</p>}
           {batches.data && (
             <Table head={["Waktu", "Berkas", "Oleh", "Baris", "Baru", "Diperbarui", "Gagal"]}>

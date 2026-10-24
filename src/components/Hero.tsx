@@ -146,12 +146,20 @@ export function Hero() {
               Lihat Informasi
             </a>
             {qrEnabled && (
-              <a
-                href="#kartu-qr"
-                className="inline-flex min-h-[52px] w-full items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft sm:w-auto sm:min-w-[172px]"
-              >
-                Cari NIM
-              </a>
+              <>
+                <a
+                  href="/pendaftaran"
+                  className="inline-flex min-h-[52px] w-full items-center justify-center rounded border-2 border-gold bg-forest-900/70 px-7 text-[15px] font-bold text-gold no-underline hover:bg-forest-900 sm:w-auto sm:min-w-[172px]"
+                >
+                  Daftar Wisuda
+                </a>
+                <a
+                  href="#kartu-qr"
+                  className="inline-flex min-h-[52px] w-full items-center justify-center rounded bg-gold px-7 text-[15px] font-bold text-forest-900 no-underline hover:bg-gold-soft sm:w-auto sm:min-w-[172px]"
+                >
+                  Cari NIM
+                </a>
+              </>
             )}
           </div>
         </div>

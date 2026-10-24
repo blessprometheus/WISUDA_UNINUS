@@ -67,7 +67,12 @@ export const staffEnabled = process.env.NEXT_PUBLIC_STAFF_ENABLED === "1";
 
 export const navLinks = [
   { label: "Informasi", href: "/#informasi" },
-  ...(qrEnabled ? [{ label: "Kartu QR", href: "/#kartu-qr" }] : []),
+  ...(qrEnabled
+    ? [
+        { label: "Pendaftaran", href: "/pendaftaran" },
+        { label: "Kartu QR", href: "/#kartu-qr" },
+      ]
+    : []),
   { label: "Arsip", href: "/arsip/69" },
   { label: "Kontak", href: "#kontak" },
 ] as const;

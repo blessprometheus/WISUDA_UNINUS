@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Tooling lokal agent, bukan bagian aplikasi.
     ".opencode/**",
+    ".tmp/**",
+    "server/dist/**",
   ]),
   {
     files: ["e2e/**/*.cjs"],

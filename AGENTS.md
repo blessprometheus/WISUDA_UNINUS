@@ -7,13 +7,13 @@ Aturan ini berlaku untuk semua coding agent (Claude Code, OpenCode, Codex, dll.)
 
 ## Sumber kebenaran
 
-| Topik | Dokumen |
-|---|---|
-| Tujuan, ruang lingkup, klasifikasi fitur | [docs/PRD.md](docs/PRD.md) |
-| Istilah domain | [docs/GLOSSARY.md](docs/GLOSSARY.md) |
-| Fase, rilis, jadwal, gate persetujuan | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) |
-| Server, deploy, pemindahan domain, rollback | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
-| Keputusan arsitektur | [docs/adr/](docs/adr/) |
+| Topik                                       | Dokumen                                                    |
+| ------------------------------------------- | ---------------------------------------------------------- |
+| Tujuan, ruang lingkup, klasifikasi fitur    | [docs/PRD.md](docs/PRD.md)                                 |
+| Istilah domain                              | [docs/GLOSSARY.md](docs/GLOSSARY.md)                       |
+| Fase, rilis, jadwal, gate persetujuan       | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) |
+| Server, deploy, pemindahan domain, rollback | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)                   |
+| Keputusan arsitektur                        | [docs/adr/](docs/adr/)                                     |
 
 Dokumen lain (`ARCHITECTURE`, `TECH_STACK`, `DATABASE_DESIGN`, `API_SPEC`, `DESIGN_SYSTEM`, `SECURITY`) dibuat saat keputusannya diambil — bukan sebelumnya.
 

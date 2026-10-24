@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
     return [
       // URL situs Wisuda ke-69 yang lama (ADR-0002): jaga tautan lama tetap hidup.
       { source: "/galeri69.html", destination: "/arsip/69", permanent: true },
+      { source: "/form-wisuda-uninus.html", destination: "/pendaftaran", permanent: true },
     ];
   },
 };

@@ -250,3 +250,108 @@ describe("kelola wisudawan satu per satu", () => {
     assert.equal(res.status, 422);
   });
 });
+
+describe("verifikasi kelayakan, sinkronisasi spreadsheet keuangan, dan form pendaftaran", () => {
+  const TINY_PNG_BASE64 =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+  it("mahasiswa belum lunas / belum yudisium ditolak saat verifikasi & submit pendaftaran", async () => {
+    const client = new Client(app);
+    const ver = await client.request("POST", "/api/v1/registration/verify", {
+      nim: "10000000001",
+    });
+    assert.equal(ver.status, 200);
+    assert.equal(ver.json.data.status, "failed_verification");
+    assert.equal(ver.json.data.reasons.length, 2);
+
+    const submit = await client.request("POST", "/api/v1/registration/submit", {
+      nim: "10000000001",
+      gender: "Perempuan",
+      toga_size: "M",
+      birth_place: "Bandung",
+      birth_date: "2002-05-10",
+      phone: "081234567890",
+      email: "ani@contoh.id",
+      gpa: 3.75,
+      graduation_date: "2026-10-01",
+      thesis_title: "Sistem Informasi Wisuda Berbasis Web",
+      photo_base64: TINY_PNG_BASE64,
+    });
+    assert.equal(submit.status, 403);
+  });
+
+  it("sinkronisasi spreadsheet keuangan memperbarui status pembayaran & yudisium", async () => {
+    const financeCsv = [
+      "NIM,PEMBAYARAN,YUDISIUM,CATATAN",
+      "10000000001,LUNAS,SUDAH,",
+      "10000000002,BELUM,SUDAH,Tunggakan Rp 250.000",
+      "99999999999,LUNAS,SUDAH,",
+    ].join("\n");
+
+    const dry = await admin.request(
+      "POST",
+      "/api/v1/admin/students/sync-finance?dry_run=1",
+      financeCsv,
+      { contentType: "text/csv", headers: { "x-filename": "keuangan.csv" } },
+    );
+    assert.equal(dry.status, 200);
+    assert.equal(dry.json.data.would_update, 2);
+    assert.equal(dry.json.data.unmatched_count, 1);
+
+    const sync = await admin.request("POST", "/api/v1/admin/students/sync-finance", financeCsv, {
+      contentType: "text/csv",
+      headers: { "x-filename": "keuangan.csv" },
+    });
+    assert.equal(sync.status, 200);
+    assert.equal(sync.json.data.updated, 2);
+
+    const client = new Client(app);
+    const ver2 = await client.request("POST", "/api/v1/registration/verify", {
+      nim: "10000000002",
+    });
+    assert.equal(ver2.json.data.status, "failed_verification");
+    assert.match(ver2.json.data.reasons.join("|"), /Tunggakan Rp 250\.000/);
+
+    const ver1 = await client.request("POST", "/api/v1/registration/verify", {
+      nim: "10000000001",
+    });
+    assert.equal(ver1.json.data.status, "success");
+    assert.equal(ver1.json.data.data.is_paid, true);
+    assert.equal(ver1.json.data.data.is_yudisium, true);
+  });
+
+  it("mahasiswa yang layak dapat mengirim form pendaftaran & terlihat di dashboard admin", async () => {
+    const client = new Client(app);
+    const submit = await client.request("POST", "/api/v1/registration/submit", {
+      nim: "10000000001",
+      gender: "Perempuan",
+      toga_size: "L",
+      birth_place: "Bandung",
+      birth_date: "2002-05-10",
+      phone: "081234567890",
+      email: "ani@contoh.id",
+      gpa: 3.85,
+      graduation_date: "2026-10-01",
+      thesis_title: "Analisis dan Perancangan Portal Wisuda UNINUS",
+      photo_base64: TINY_PNG_BASE64,
+    });
+    assert.equal(submit.status, 200);
+    assert.equal(submit.json.data.status, "success");
+
+    const summary = await admin.request("GET", "/api/v1/admin/students/summary");
+    assert.equal(summary.status, 200);
+    assert.equal(summary.json.data.eligible, 1);
+    assert.equal(summary.json.data.registered, 1);
+
+    const registeredList = await admin.request("GET", "/api/v1/admin/students?filter=terdaftar");
+    assert.equal(registeredList.status, 200);
+    assert.equal(registeredList.json.data.length, 1);
+    const student = registeredList.json.data[0];
+    assert.equal(student.toga_size, "L");
+    assert.equal(student.has_photo, true);
+
+    const photoRes = await admin.request("GET", `/api/v1/admin/students/${student.id}/photo`);
+    assert.equal(photoRes.status, 200);
+    assert.equal(photoRes.headers["content-type"], "image/png");
+  });
+});

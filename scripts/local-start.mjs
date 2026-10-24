@@ -1,12 +1,20 @@
 // Menjalankan API (3001) dan situs (3000) bersamaan untuk uji LOKAL. Hentikan keduanya dengan Ctrl+C.
 // Prasyarat: .env.local terisi, `npm run build` sudah dijalankan dengan saklar fitur, dan database lokal hidup.
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
+
+execFileSync(process.execPath, ["server/scripts/test-db.mjs", "start"], { stdio: "inherit" });
 
 const children = [
-  spawn(process.execPath, ["--env-file-if-exists=.env.local", "--import", "tsx", "server/src/index.ts"], {
+  spawn(
+    process.execPath,
+    ["--env-file-if-exists=.env.local", "--import", "tsx", "server/src/index.ts"],
+    {
+      stdio: "inherit",
+    },
+  ),
+  spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3000"], {
     stdio: "inherit",
   }),
-  spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3000"], { stdio: "inherit" }),
 ];
 
 function stop() {

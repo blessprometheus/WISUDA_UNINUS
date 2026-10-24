@@ -6,6 +6,9 @@ export interface ImportStudent {
   studyProgram: string;
   cohortYear: number | null;
   graduationDateText: string | null;
+  isPaid: boolean | null;
+  isYudisium: boolean | null;
+  eligibilityNote: string | null;
 }
 
 export interface ImportIssue {
@@ -37,6 +40,20 @@ const HEADER_ALIASES: Record<string, keyof ImportStudent | "no"> = {
   cohort_year: "cohortYear",
   tanggal_lulus: "graduationDateText",
   graduation_date: "graduationDateText",
+  pembayaran: "isPaid",
+  status_pembayaran: "isPaid",
+  keuangan: "isPaid",
+  status_keuangan: "isPaid",
+  is_paid: "isPaid",
+  lunas: "isPaid",
+  yudisium: "isYudisium",
+  status_yudisium: "isYudisium",
+  is_yudisium: "isYudisium",
+  catatan: "eligibilityNote",
+  catatan_kelayakan: "eligibilityNote",
+  keterangan: "eligibilityNote",
+  alasan: "eligibilityNote",
+  eligibility_note: "eligibilityNote",
 };
 
 const COLUMN_LABEL: Record<string, string> = {
@@ -45,6 +62,9 @@ const COLUMN_LABEL: Record<string, string> = {
   studyProgram: "Program studi",
   cohortYear: "Angkatan",
   graduationDateText: "Tanggal lulus",
+  isPaid: "Status pembayaran",
+  isYudisium: "Status yudisium",
+  eligibilityNote: "Catatan kelayakan",
   file: "Berkas",
 };
 
@@ -53,6 +73,49 @@ function normalizeHeader(value: string): string {
     .trim()
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
+}
+
+function parseBooleanCell(raw: string): boolean | "invalid" | null {
+  if (!raw) return null;
+  const v = raw.trim().toLowerCase();
+  if (
+    [
+      "1",
+      "ya",
+      "yes",
+      "true",
+      "lunas",
+      "sudah",
+      "lulus",
+      "selesai",
+      "ok",
+      "valid",
+      "eligible",
+      "layak",
+      "terverifikasi",
+    ].includes(v)
+  ) {
+    return true;
+  }
+  if (
+    [
+      "0",
+      "tidak",
+      "no",
+      "false",
+      "belum",
+      "belum lunas",
+      "belum_lunas",
+      "tunggakan",
+      "pending",
+      "kurang",
+      "belum yudisium",
+      "belum_yudisium",
+    ].includes(v)
+  ) {
+    return false;
+  }
+  return "invalid";
 }
 
 function parseRow(
@@ -113,10 +176,52 @@ function parseRow(
     errors.push({ row: row.line, column: "graduationDateText", message: "Maksimal 40 karakter." });
   }
 
+  const paidParsed = parseBooleanCell(get("isPaid"));
+  let isPaid: boolean | null = null;
+  if (paidParsed === "invalid") {
+    errors.push({
+      row: row.line,
+      column: "isPaid",
+      message: "Gunakan LUNAS/BELUM atau YA/TIDAK atau 1/0.",
+    });
+  } else {
+    isPaid = paidParsed;
+  }
+
+  const yudisiumParsed = parseBooleanCell(get("isYudisium"));
+  let isYudisium: boolean | null = null;
+  if (yudisiumParsed === "invalid") {
+    errors.push({
+      row: row.line,
+      column: "isYudisium",
+      message: "Gunakan SUDAH/BELUM atau YA/TIDAK atau 1/0.",
+    });
+  } else {
+    isYudisium = yudisiumParsed;
+  }
+
+  const noteRaw = get("eligibilityNote");
+  if (noteRaw.length > 500) {
+    errors.push({
+      row: row.line,
+      column: "eligibilityNote",
+      message: "Catatan maksimal 500 karakter.",
+    });
+  }
+
   return {
     student:
       errors.length === 0
-        ? { nim, name, studyProgram, cohortYear, graduationDateText: graduationRaw || null }
+        ? {
+            nim,
+            name,
+            studyProgram,
+            cohortYear,
+            graduationDateText: graduationRaw || null,
+            isPaid,
+            isYudisium,
+            eligibilityNote: noteRaw || null,
+          }
         : null,
     errors,
   };
@@ -191,6 +296,145 @@ export function analyzeImport(parsed: ParsedCsv): ImportAnalysis {
         message: `NIM ${nim} ganda dengan data berbeda (baris ${rows}); semua baris ditolak, periksa data sumber.`,
       });
     }
+  }
+  valid.sort((a, b) => a.row - b.row);
+  return { valid, errors, warnings, ignoredColumns, totalRows: parsed.rows.length };
+}
+
+export interface FinanceSyncItem {
+  nim: string;
+  isPaid: boolean | null;
+  isYudisium: boolean | null;
+  eligibilityNote: string | null;
+}
+
+export interface FinanceSyncAnalysis {
+  valid: Array<{ row: number; item: FinanceSyncItem }>;
+  errors: ImportIssue[];
+  warnings: ImportIssue[];
+  ignoredColumns: string[];
+  totalRows: number;
+}
+
+/**
+ * Analisis berkas spreadsheet keuangan/yudisium (cukup kolom NIM dan minimal satu dari PEMBAYARAN / YUDISIUM / CATATAN).
+ */
+export function analyzeFinanceSync(parsed: ParsedCsv): FinanceSyncAnalysis {
+  const columns = new Map<keyof ImportStudent, number>();
+  const ignoredColumns: string[] = [];
+  parsed.header.forEach((raw, index) => {
+    const alias = HEADER_ALIASES[normalizeHeader(raw)];
+    if (alias && alias !== "no" && !columns.has(alias)) columns.set(alias, index);
+    else if (!alias && raw.trim()) ignoredColumns.push(raw.trim());
+  });
+
+  if (!columns.has("nim")) {
+    return {
+      valid: [],
+      errors: [{ row: 1, column: "file", message: "Kolom wajib tidak ditemukan: NIM." }],
+      warnings: [],
+      ignoredColumns,
+      totalRows: parsed.rows.length,
+    };
+  }
+  if (!columns.has("isPaid") && !columns.has("isYudisium") && !columns.has("eligibilityNote")) {
+    return {
+      valid: [],
+      errors: [
+        {
+          row: 1,
+          column: "file",
+          message:
+            "Sertakan minimal satu kolom status: PEMBAYARAN (LUNAS/BELUM), YUDISIUM (SUDAH/BELUM), atau CATATAN.",
+        },
+      ],
+      warnings: [],
+      ignoredColumns,
+      totalRows: parsed.rows.length,
+    };
+  }
+
+  const errors: ImportIssue[] = [];
+  const warnings: ImportIssue[] = [];
+  const byNim = new Map<string, Array<{ row: number; item: FinanceSyncItem }>>();
+
+  for (const row of parsed.rows) {
+    if (row.cells.length !== parsed.header.length) {
+      errors.push({
+        row: row.line,
+        column: "file",
+        message: "Jumlah kolom tidak sama dengan judul.",
+      });
+      continue;
+    }
+    const get = (key: keyof ImportStudent): string => {
+      const index = columns.get(key);
+      return index === undefined ? "" : (row.cells[index]?.trim() ?? "");
+    };
+    const nim = get("nim").toUpperCase();
+    const rowErrors: ImportIssue[] = [];
+    if (!nim || !NIM_PATTERN.test(nim)) {
+      rowErrors.push({
+        row: row.line,
+        column: "nim",
+        message: "Wajib diisi; hanya huruf, angka, titik, atau strip (maksimal 30).",
+      });
+    }
+    const paidParsed = parseBooleanCell(get("isPaid"));
+    let isPaid: boolean | null = null;
+    if (paidParsed === "invalid") {
+      rowErrors.push({
+        row: row.line,
+        column: "isPaid",
+        message: "Gunakan LUNAS/BELUM atau YA/TIDAK atau 1/0.",
+      });
+    } else {
+      isPaid = paidParsed;
+    }
+
+    const yudisiumParsed = parseBooleanCell(get("isYudisium"));
+    let isYudisium: boolean | null = null;
+    if (yudisiumParsed === "invalid") {
+      rowErrors.push({
+        row: row.line,
+        column: "isYudisium",
+        message: "Gunakan SUDAH/BELUM atau YA/TIDAK atau 1/0.",
+      });
+    } else {
+      isYudisium = yudisiumParsed;
+    }
+
+    const noteRaw = get("eligibilityNote");
+    if (noteRaw.length > 500) {
+      rowErrors.push({
+        row: row.line,
+        column: "eligibilityNote",
+        message: "Catatan maksimal 500 karakter.",
+      });
+    }
+
+    errors.push(...rowErrors);
+    if (rowErrors.length > 0) continue;
+
+    const list = byNim.get(nim) ?? [];
+    list.push({
+      row: row.line,
+      item: { nim, isPaid, isYudisium, eligibilityNote: noteRaw || null },
+    });
+    byNim.set(nim, list);
+  }
+
+  const valid: Array<{ row: number; item: FinanceSyncItem }> = [];
+  for (const [nim, entries] of byNim) {
+    const last = entries.at(-1)!;
+    if (entries.length > 1) {
+      warnings.push({
+        row: last.row,
+        column: "nim",
+        message: `NIM ${nim} muncul ${entries.length} kali; baris terakhir (baris ${last.row}) dipakai.`,
+      });
+    }
+    valid.push(last);
   }
   valid.sort((a, b) => a.row - b.row);
   return { valid, errors, warnings, ignoredColumns, totalRows: parsed.rows.length };
