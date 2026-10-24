@@ -3,6 +3,16 @@
 import { execFileSync, spawn } from "node:child_process";
 
 execFileSync(process.execPath, ["server/scripts/test-db.mjs", "start"], { stdio: "inherit" });
+execFileSync(
+  process.execPath,
+  ["--env-file-if-exists=.env.local", "--import", "tsx", "server/scripts/migrate.ts"],
+  { stdio: "inherit" },
+);
+execFileSync(
+  process.execPath,
+  ["--env-file-if-exists=.env.local", "--import", "tsx", "server/scripts/seed-demo.ts"],
+  { stdio: "inherit" },
+);
 
 const children = [
   spawn(

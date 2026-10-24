@@ -64,17 +64,20 @@ let lastPage = null;
   await page.getByLabel("Kata sandi").fill(PASS);
   await page.getByRole("button", { name: "Masuk" }).click();
   await page.waitForURL(/\/admin$/);
-  await page.getByRole("heading", { name: "Ringkasan" }).waitFor();
+  await page.getByRole("heading", { name: /Ringkasan Eksekutif/i }).waitFor();
   console.log("2 login superadmin -> /admin");
 
   // 3. Ringkasan menampilkan data sesi aktif
-  await page.getByText("Wisudawan aktif").waitFor();
-  assert.ok((await page.locator("main").innerText()).includes("per program studi"));
+  await page.getByText("Total Kandidat (Data Awalan)").waitFor();
+  assert.ok((await page.locator("main").innerText()).includes("Berdasarkan Program Studi"));
   await page.screenshot({ path: `${out}/a-ringkasan.png` });
   console.log("3 ringkasan tampil");
 
   // 4. Sesi: buat sesi hari-H, aktifkan, ubah jam
-  await page.getByRole("link", { name: "Sesi", exact: true }).click();
+  await page
+    .getByRole("link", { name: /Sesi Kehadiran/i })
+    .first()
+    .click();
   await page.getByRole("heading", { name: "Sesi Kehadiran" }).waitFor();
   const form = page.locator("form").first();
   await form.getByLabel("Jenis").selectOption("hari_h");
@@ -104,8 +107,11 @@ let lastPage = null;
   console.log("4 sesi: buat, aktifkan (hanya satu aktif), ubah jam");
 
   // 5. Impor: pratinjau -> masalah terlihat -> impor
-  await page.getByRole("link", { name: "Impor Data" }).click();
-  await page.getByRole("heading", { name: "Impor Data Wisudawan" }).waitFor();
+  await page
+    .getByRole("link", { name: /Impor & Sinkronisasi/i })
+    .first()
+    .click();
+  await page.getByRole("heading", { name: /Impor & Sinkronisasi/i }).waitFor();
   assert.equal(sql("SELECT COUNT(*) FROM students"), "3");
   await page
     .locator('input[type="file"]')
@@ -125,7 +131,7 @@ let lastPage = null;
   assert.equal(sql("SELECT COUNT(*) FROM students"), "3", "pratinjau tidak boleh menyimpan");
   await page.screenshot({ path: `${out}/a-impor-pratinjau.png`, fullPage: true });
   await page.getByRole("button", { name: "Impor sekarang" }).click();
-  await page.getByText("Hasil impor").waitFor();
+  await page.getByText("Hasil pemrosesan").waitFor();
   assert.equal(
     sql("SELECT COUNT(*) FROM students"),
     "4",
@@ -140,14 +146,18 @@ let lastPage = null;
   console.log("5 impor: pratinjau, masalah terlapor, impor, token stabil");
 
   // 6. Wisudawan: cari, tambah, ubah, nonaktifkan
-  await page.getByRole("link", { name: "Wisudawan" }).click();
-  await page.getByRole("heading", { name: "Wisudawan", exact: true }).waitFor();
-  await page.getByLabel("NIM", { exact: true }).first().fill("10000000050");
-  await page.locator("form").first().getByLabel("Nama").fill("Fani Susulan");
-  await page.locator("form").first().getByLabel("Program studi").fill("S1 Manajemen");
-  await page.getByRole("button", { name: "Tambah wisudawan" }).click();
-  await page.getByText("Wisudawan ditambahkan.").waitFor();
-  await page.getByLabel("Cari NIM / nama / prodi").fill("Susulan");
+  await page
+    .getByRole("link", { name: /Database Wisudawan/i })
+    .first()
+    .click();
+  await page.getByText("Tambah Data Awalan").waitFor();
+  await page.getByRole("button", { name: "Tambah Data Awalan" }).click();
+  await page.getByLabel("NIM Wisudawan *").fill("10000000050");
+  await page.getByLabel("Nama Lengkap *").fill("Fani Susulan");
+  await page.getByLabel("Program Studi *").fill("S1 Manajemen");
+  await page.getByRole("button", { name: "Simpan ke Database Wisudawan" }).click();
+  await page.getByText("Wisudawan baru berhasil ditambahkan.").waitFor();
+  await page.getByPlaceholder(/Cari NIM, Nama Wisudawan/i).fill("Susulan");
   await page.getByRole("button", { name: "Cari", exact: true }).click();
   const srow = page.locator("tr", { hasText: "Fani Susulan" });
   await srow.waitFor();
@@ -168,10 +178,13 @@ let lastPage = null;
   sql(
     `INSERT INTO unregistered_entries (session_id, user_id, typed_nim, typed_name) VALUES (${sid}, ${uid}, '77777777777', 'Tamu Rekaan')`,
   );
-  await page.getByRole("link", { name: "Kehadiran" }).click();
-  await page.getByRole("heading", { name: "Kehadiran", exact: true }).waitFor();
+  await page
+    .getByRole("link", { name: /Presensi & Kehadiran/i })
+    .first()
+    .click();
+  await page.getByRole("heading", { name: /Rekapitulasi Kehadiran/i }).waitFor();
   await page.getByText("Ani Rekaan Revisi").waitFor();
-  assert.ok((await page.locator("main").innerText()).includes("di luar jam"));
+  assert.ok((await page.locator("main").innerText()).toLowerCase().includes("di luar jam"));
   const csv = await page.evaluate(
     async (id) => (await fetch(`/api/v1/admin/attendances/export?session_id=${id}`)).text(),
     sid,
@@ -182,19 +195,25 @@ let lastPage = null;
   );
   await page
     .locator("tr", { hasText: "77777777777" })
-    .getByRole("button", { name: "Tandai ditinjau" })
+    .getByRole("button", { name: /Tandai Ditinjau/i })
     .click();
   await page.getByText("Ditandai sudah ditinjau.").waitFor();
   await page.screenshot({ path: `${out}/a-kehadiran.png`, fullPage: true });
   console.log("7 kehadiran: daftar, tanda di luar jam, ekspor CSV, tinjau tidak terdaftar");
 
   // 8. Ringkasan sekarang menunjukkan angka
-  await page.getByRole("link", { name: "Ringkasan" }).click();
-  await page.getByText("wisudawan hadir").first().waitFor();
+  await page
+    .getByRole("link", { name: /Dashboard Statistik/i })
+    .first()
+    .click();
+  await page.getByText("Hadir Prosesi / Sesi Aktif").waitFor();
   console.log("8 ringkasan setelah ada kehadiran");
 
   // 9. Pengguna: buat akun, kata sandi sementara sekali, login dengan akun baru
-  await page.getByRole("link", { name: "Pengguna" }).click();
+  await page
+    .getByRole("link", { name: /Manajemen Pengguna/i })
+    .first()
+    .click();
   await page.getByRole("heading", { name: "Pengguna", exact: true }).waitFor();
   const uform = page.locator("form").first();
   await uform.getByLabel("Nama").fill("Petugas Baru");
@@ -231,7 +250,10 @@ let lastPage = null;
   console.log("11 akun dinonaktifkan");
 
   // 12. Audit & retensi
-  await page.getByRole("link", { name: "Audit & Retensi" }).click();
+  await page
+    .getByRole("link", { name: /Audit Log & Retensi/i })
+    .first()
+    .click();
   await page.getByRole("heading", { name: "Audit & Retensi" }).waitFor();
   const audit = await page.locator("main").innerText();
   for (const a of ["students_import", "session_activated", "user_created", "student_created"])

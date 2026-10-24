@@ -30,12 +30,25 @@ export function issueCsrfCookie(reply: FastifyReply): void {
   });
 }
 
+function sameAllowedOrigin(candidateOrigin: string, configuredOrigin: string): boolean {
+  if (candidateOrigin === configuredOrigin) return true;
+  const a = new URL(candidateOrigin);
+  const b = new URL(configuredOrigin);
+  const loopback = new Set(["localhost", "127.0.0.1"]);
+  return (
+    a.protocol === b.protocol &&
+    a.port === b.port &&
+    loopback.has(a.hostname) &&
+    loopback.has(b.hostname)
+  );
+}
+
 /** Wajib untuk semua permintaan yang mengubah data. Mengembalikan false setelah mengirim galat. */
 export function verifyCsrf(request: FastifyRequest, reply: FastifyReply): boolean {
   const origin = request.headers.origin || request.headers.referer;
   if (origin) {
     try {
-      if (new URL(origin).origin !== config.publicOrigin) {
+      if (!sameAllowedOrigin(new URL(origin).origin, config.publicOrigin)) {
         fail(reply, 403, "Asal permintaan tidak diizinkan.");
         return false;
       }

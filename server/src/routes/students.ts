@@ -67,6 +67,8 @@ interface StudentInput {
   isPaid: boolean;
   isYudisium: boolean;
   eligibilityNote: string | null;
+  gender: string | null;
+  togaSize: string | null;
 }
 
 function readStudentInput(b: Record<string, unknown>): StudentInput | string {
@@ -86,6 +88,10 @@ function readStudentInput(b: Record<string, unknown>): StudentInput | string {
   const isPaid = b.is_paid === true || b.is_paid === 1 || b.is_paid === "1";
   const isYudisium = b.is_yudisium === true || b.is_yudisium === 1 || b.is_yudisium === "1";
   const eligibilityNote = str(b.eligibility_note, 500) || null;
+  const rawGender = str(b.gender, 20);
+  const gender = rawGender === "Laki-laki" || rawGender === "Perempuan" ? rawGender : null;
+  const rawToga = str(b.toga_size, 10).toUpperCase();
+  const togaSize = ["M", "L", "XL", "XXL", "XXXL", "XXXXL"].includes(rawToga) ? rawToga : null;
   return {
     nim,
     name,
@@ -95,6 +101,8 @@ function readStudentInput(b: Record<string, unknown>): StudentInput | string {
     isPaid,
     isYudisium,
     eligibilityNote,
+    gender,
+    togaSize,
   };
 }
 
@@ -684,23 +692,143 @@ export async function registerStudentRoutes(app: FastifyInstance): Promise<void>
   app.get("/api/v1/admin/students/summary", async (request, reply) => {
     if (!(await requireAuth(request, reply, ["superadmin"]))) return reply;
     const ceremonyId = await currentCeremonyId();
-    const res = await pool.query<{
-      total: number;
-      paid: number;
-      yudisium: number;
-      eligible: number;
-      registered: number;
-    }>(
-      `SELECT COUNT(*)::int AS total,
-              COUNT(*) FILTER (WHERE is_paid)::int AS paid,
-              COUNT(*) FILTER (WHERE is_yudisium)::int AS yudisium,
-              COUNT(*) FILTER (WHERE is_paid AND is_yudisium)::int AS eligible,
-              COUNT(*) FILTER (WHERE registration_status = 'terdaftar')::int AS registered
-         FROM students
-        WHERE ceremony_id = $1 AND is_active = TRUE AND anonymized_at IS NULL`,
-      [ceremonyId],
-    );
-    return ok(reply, res.rows[0] ?? { total: 0, paid: 0, yudisium: 0, eligible: 0, registered: 0 });
+    const [totalsRes, togaRes, angkatanRes, prodiRes, recentRes] = await Promise.all([
+      pool.query<{
+        total: number;
+        paid: number;
+        yudisium: number;
+        eligible: number;
+        registered: number;
+        blocked: number;
+        unregistered_eligible: number;
+        avg_gpa: string | null;
+        laki_laki: number;
+        perempuan: number;
+      }>(
+        `SELECT COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE is_paid)::int AS paid,
+                COUNT(*) FILTER (WHERE is_yudisium)::int AS yudisium,
+                COUNT(*) FILTER (WHERE is_paid AND is_yudisium)::int AS eligible,
+                COUNT(*) FILTER (WHERE registration_status = 'terdaftar')::int AS registered,
+                COUNT(*) FILTER (WHERE NOT (is_paid AND is_yudisium))::int AS blocked,
+                COUNT(*) FILTER (WHERE is_paid AND is_yudisium AND registration_status = 'belum_daftar')::int AS unregistered_eligible,
+                ROUND(AVG(gpa), 2)::text AS avg_gpa,
+                COUNT(*) FILTER (WHERE gender = 'Laki-laki')::int AS laki_laki,
+                COUNT(*) FILTER (WHERE gender = 'Perempuan')::int AS perempuan
+           FROM students
+          WHERE ceremony_id = $1 AND is_active = TRUE AND anonymized_at IS NULL`,
+        [ceremonyId],
+      ),
+      pool.query<{ ukuran: string; jumlah: number }>(
+        `SELECT toga_size AS ukuran, COUNT(*)::int AS jumlah
+           FROM students
+          WHERE ceremony_id = $1 AND is_active = TRUE AND anonymized_at IS NULL AND toga_size IS NOT NULL
+          GROUP BY toga_size`,
+        [ceremonyId],
+      ),
+      pool.query<{
+        angkatan: number;
+        total_kandidat: number;
+        terdaftar: number;
+        laki_laki: number;
+        perempuan: number;
+      }>(
+        `SELECT COALESCE(cohort_year, 2022)::int AS angkatan,
+                COUNT(*)::int AS total_kandidat,
+                COUNT(*) FILTER (WHERE registration_status = 'terdaftar')::int AS terdaftar,
+                COUNT(*) FILTER (WHERE gender = 'Laki-laki')::int AS laki_laki,
+                COUNT(*) FILTER (WHERE gender = 'Perempuan')::int AS perempuan
+           FROM students
+          WHERE ceremony_id = $1 AND is_active = TRUE AND anonymized_at IS NULL
+          GROUP BY COALESCE(cohort_year, 2022)
+          ORDER BY angkatan DESC`,
+        [ceremonyId],
+      ),
+      pool.query<{
+        study_program: string;
+        total_kandidat: number;
+        layak: number;
+        terdaftar: number;
+        belum_daftar: number;
+        laki_laki: number;
+        perempuan: number;
+        rata_ipk: string | null;
+      }>(
+        `SELECT study_program,
+                COUNT(*)::int AS total_kandidat,
+                COUNT(*) FILTER (WHERE is_paid AND is_yudisium)::int AS layak,
+                COUNT(*) FILTER (WHERE registration_status = 'terdaftar')::int AS terdaftar,
+                COUNT(*) FILTER (WHERE is_paid AND is_yudisium AND registration_status = 'belum_daftar')::int AS belum_daftar,
+                COUNT(*) FILTER (WHERE gender = 'Laki-laki')::int AS laki_laki,
+                COUNT(*) FILTER (WHERE gender = 'Perempuan')::int AS perempuan,
+                ROUND(AVG(gpa), 2)::text AS rata_ipk
+           FROM students
+          WHERE ceremony_id = $1 AND is_active = TRUE AND anonymized_at IS NULL
+          GROUP BY study_program
+          ORDER BY study_program`,
+        [ceremonyId],
+      ),
+      pool.query<{
+        id: number;
+        nim: string;
+        name: string;
+        study_program: string;
+        gender: string | null;
+        toga_size: string | null;
+        gpa: string | null;
+        registered_at: Date | null;
+      }>(
+        `SELECT id, nim, name, study_program, gender, toga_size, gpa::text AS gpa, registered_at
+           FROM students
+          WHERE ceremony_id = $1 AND is_active = TRUE AND anonymized_at IS NULL AND registration_status = 'terdaftar'
+          ORDER BY registered_at DESC NULLS LAST, updated_at DESC
+          LIMIT 8`,
+        [ceremonyId],
+      ),
+    ]);
+
+    const t = totalsRes.rows[0] ?? {
+      total: 0,
+      paid: 0,
+      yudisium: 0,
+      eligible: 0,
+      registered: 0,
+      blocked: 0,
+      unregistered_eligible: 0,
+      avg_gpa: null,
+      laki_laki: 0,
+      perempuan: 0,
+    };
+    const togaMap = new Map(togaRes.rows.map((r) => [r.ukuran, r.jumlah]));
+    const byToga = ["M", "L", "XL", "XXL", "XXXL", "XXXXL"].map((sz) => ({
+      ukuran: sz,
+      jumlah: togaMap.get(sz) ?? 0,
+    }));
+
+    return ok(reply, {
+      total: t.total,
+      paid: t.paid,
+      yudisium: t.yudisium,
+      eligible: t.eligible,
+      registered: t.registered,
+      blocked: t.blocked,
+      unregistered_eligible: t.unregistered_eligible,
+      avg_gpa: t.avg_gpa,
+      by_gender: {
+        laki_laki: t.laki_laki,
+        perempuan: t.perempuan,
+      },
+      by_toga: byToga,
+      by_angkatan: angkatanRes.rows,
+      by_prodi: prodiRes.rows.map((p) => {
+        const match = p.study_program.match(/^(S1|S2|S3|D3|D4|Profesi)\b/i);
+        return {
+          ...p,
+          jenjang: match ? match[1]!.toUpperCase() : "S1",
+        };
+      }),
+      recent_registrants: recentRes.rows,
+    });
   });
 
   // ---------- Superadmin: kelola wisudawan satu per satu ----------
@@ -710,6 +838,9 @@ export async function registerStudentRoutes(app: FastifyInstance): Promise<void>
     const page = pagination(q);
     const search = str(q.search, 100);
     const filter = str(q.filter, 30);
+    const studyProgramFilter = str(q.study_program, 160);
+    const genderFilter = str(q.gender, 20);
+    const togaFilter = str(q.toga_size, 10).toUpperCase();
     const pattern = search ? `%${search.replace(/[\\%_]/g, "\\$&")}%` : null;
     const ceremonyId = await currentCeremonyId();
 
@@ -722,24 +853,71 @@ export async function registerStudentRoutes(app: FastifyInstance): Promise<void>
       filterClause =
         " AND is_paid = TRUE AND is_yudisium = TRUE AND registration_status = 'belum_daftar'";
 
-    const where = `WHERE ceremony_id = $1 AND ($2::text IS NULL OR nim ILIKE $2 OR name ILIKE $2 OR study_program ILIKE $2)${filterClause}`;
+    const where = `WHERE ceremony_id = $1
+      AND ($2::text IS NULL OR nim ILIKE $2 OR name ILIKE $2 OR study_program ILIKE $2)
+      AND ($3::text = '' OR study_program = $3)
+      AND ($4::text = '' OR gender = $4)
+      AND ($5::text = '' OR toga_size = $5)${filterClause}`;
     const [count, rows] = await Promise.all([
       pool.query<{ total: number }>(`SELECT COUNT(*)::int AS total FROM students ${where}`, [
         ceremonyId,
         pattern,
+        studyProgramFilter,
+        genderFilter,
+        togaFilter,
       ]),
-      pool.query(
+      pool.query<{
+        id: number;
+        nim: string;
+        name: string;
+        study_program: string;
+        cohort_year: number | null;
+        graduation_date_text: string | null;
+        is_paid: boolean;
+        is_yudisium: boolean;
+        eligibility_note: string | null;
+        registration_status: string;
+        registered_at: Date | null;
+        gender: string | null;
+        toga_size: string | null;
+        birth_place: string | null;
+        birth_date: string | null;
+        phone: string | null;
+        email: string | null;
+        gpa: string | null;
+        graduation_date: string | null;
+        thesis_title: string | null;
+        has_photo: boolean;
+        is_active: boolean;
+        anonymized_at: Date | null;
+        updated_at: Date;
+      }>(
         `SELECT id, nim, name, study_program, cohort_year, graduation_date_text,
                 is_paid, is_yudisium, eligibility_note, registration_status, registered_at,
                 gender, toga_size, birth_place, to_char(birth_date, 'YYYY-MM-DD') AS birth_date,
                 phone, email, gpa::text AS gpa, to_char(graduation_date, 'YYYY-MM-DD') AS graduation_date,
                 thesis_title, (photo_data IS NOT NULL) AS has_photo,
                 is_active, anonymized_at, updated_at
-           FROM students ${where} ORDER BY study_program, name, nim LIMIT $3 OFFSET $4`,
-        [ceremonyId, pattern, page.perPage, page.offset],
+           FROM students ${where} ORDER BY study_program, name, nim LIMIT $6 OFFSET $7`,
+        [
+          ceremonyId,
+          pattern,
+          studyProgramFilter,
+          genderFilter,
+          togaFilter,
+          page.perPage,
+          page.offset,
+        ],
       ),
     ]);
-    return ok(reply, rows.rows, pageMeta(page, count.rows[0]?.total ?? 0));
+    return ok(
+      reply,
+      rows.rows.map((r) => ({
+        ...r,
+        qr_url: r.anonymized_at ? null : signedQrUrl(r.id),
+      })),
+      pageMeta(page, count.rows[0]?.total ?? 0),
+    );
   });
 
   app.post("/api/v1/admin/students", async (request, reply) => {
@@ -751,8 +929,8 @@ export async function registerStudentRoutes(app: FastifyInstance): Promise<void>
       const result = await pool.query<{ id: number }>(
         `INSERT INTO students
            (ceremony_id, nim, name, study_program, cohort_year, graduation_date_text,
-            is_paid, is_yudisium, eligibility_note, attendance_token)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+            is_paid, is_yudisium, eligibility_note, gender, toga_size, attendance_token)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
         [
           await currentCeremonyId(),
           input.nim,
@@ -763,6 +941,8 @@ export async function registerStudentRoutes(app: FastifyInstance): Promise<void>
           input.isPaid,
           input.isYudisium,
           input.eligibilityNote,
+          input.gender,
+          input.togaSize,
           newToken(),
         ],
       );
@@ -789,6 +969,7 @@ export async function registerStudentRoutes(app: FastifyInstance): Promise<void>
       const result = await pool.query(
         `UPDATE students SET nim = $2, name = $3, study_program = $4, cohort_year = $5,
                 graduation_date_text = $6, is_paid = $7, is_yudisium = $8, eligibility_note = $9,
+                gender = COALESCE($10, gender), toga_size = COALESCE($11, toga_size),
                 updated_at = NOW()
           WHERE id = $1 AND anonymized_at IS NULL`,
         [
@@ -801,6 +982,8 @@ export async function registerStudentRoutes(app: FastifyInstance): Promise<void>
           input.isPaid,
           input.isYudisium,
           input.eligibilityNote,
+          input.gender,
+          input.togaSize,
         ],
       );
       if (result.rowCount !== 1) return fail(reply, 404, "Wisudawan tidak ditemukan.");

@@ -121,3 +121,86 @@ export const IconArrowRight = ({ className }: IconProps) => (
     <path d="M5 12h14M13 6l6 6-6 6" />
   </Svg>
 );
+
+export const IconSparkles = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M12 3l1.9 5.8L20 10.8l-6.1 1.9L12 18.5l-1.9-5.8L4 10.8l6.1-2L12 3Z" />
+    <path d="M5 3v4M3 5h4M19 17v4M17 19h4" />
+  </Svg>
+);
+
+export const IconSearch = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Svg>
+);
+
+export const IconShirt = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23Z" />
+  </Svg>
+);
+
+export const IconAward = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <circle cx="12" cy="8" r="6" />
+    <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+  </Svg>
+);
+
+export const IconQrCode = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 19h2M19 14v2" />
+  </Svg>
+);
+
+export const IconExternalLink = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <path d="M15 3h6v6M10 14 21 3" />
+  </Svg>
+);
+
+export const IconMenu = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M4 6h16M4 12h16M4 18h16" />
+  </Svg>
+);
+
+export const IconX = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </Svg>
+);
+
+export const IconPlus = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M12 5v14M5 12h14" />
+  </Svg>
+);
+
+export const IconCheckCircle = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <path d="m9 11 3 3L22 4" />
+  </Svg>
+);
+
+export const IconDatabase = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+    <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+  </Svg>
+);
+
+export const IconEye = ({ className }: IconProps) => (
+  <Svg className={className}>
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </Svg>
+);

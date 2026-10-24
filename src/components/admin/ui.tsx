@@ -5,18 +5,38 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { api, type ApiResult, type PageMeta } from "@/lib/api";
 
 const btnBase =
-  "inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-4 text-[14px] font-bold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50";
-export const btnPrimary = `${btnBase} bg-forest-900 text-white hover:bg-forest-800`;
-export const btnGold = `${btnBase} bg-gold text-forest-900 hover:bg-gold-soft`;
-export const btnGhost = `${btnBase} border-2 border-forest-900/30 text-forest-900 hover:bg-forest-900/5`;
-export const btnDanger = `${btnBase} bg-[#b3261e] text-white hover:bg-[#8f1d17]`;
+  "inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-extrabold transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50";
+export const btnPrimary = `${btnBase} bg-[#006837] text-white shadow-xs hover:bg-[#004220]`;
+export const btnGold = `${btnBase} bg-[#f4c430] text-[#002b15] shadow-xs hover:bg-amber-400`;
+export const btnGhost = `${btnBase} border border-slate-300 bg-white text-slate-700 hover:border-emerald-500/40 hover:bg-emerald-50/50 hover:text-[#006837]`;
+export const btnDanger = `${btnBase} bg-red-600 text-white shadow-xs hover:bg-red-700`;
 export const inputClass =
-  "min-h-11 w-full rounded-lg border-2 border-forest-900/25 bg-white px-3 text-[15px] text-forest-900 transition-colors duration-150 focus:border-forest-900";
+  "min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-900 transition-colors duration-150 focus:border-[#006837] focus:outline-hidden focus:ring-2 focus:ring-[#006837]/20";
 
-export function PageTitle({ title, children }: { title: string; children?: ReactNode }) {
+export function PageTitle({
+  title,
+  subtitle,
+  eyebrow,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  eyebrow?: string;
+  children?: ReactNode;
+}) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <h1 className="text-3xl font-extrabold tracking-tight text-forest-900">{title}</h1>
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/80 pb-4">
+      <div>
+        {eyebrow && (
+          <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[#006837]">
+            {eyebrow}
+          </span>
+        )}
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
+          {title}
+        </h1>
+        {subtitle && <p className="mt-1 text-xs font-medium text-slate-500">{subtitle}</p>}
+      </div>
       {children}
     </div>
   );
@@ -24,19 +44,33 @@ export function PageTitle({ title, children }: { title: string; children?: React
 
 export function Card({
   title,
+  subtitle,
+  eyebrow,
   children,
   className = "",
 }: {
   title?: string;
+  subtitle?: string;
+  eyebrow?: string;
   children: ReactNode;
   className?: string;
 }) {
   return (
     // min-w-0: kartu di dalam grid tidak boleh melebar mengikuti tabel di dalamnya (penyebab geser horizontal di HP).
     <section
-      className={`min-w-0 rounded-xl border border-forest-900/10 bg-white p-5 shadow-sm ${className}`}
+      className={`min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-2xs ${className}`}
     >
-      {title && <h2 className="mb-4 text-lg font-extrabold text-forest-900">{title}</h2>}
+      {(title || eyebrow) && (
+        <div className="mb-4 border-b border-slate-100 pb-3">
+          {eyebrow && (
+            <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[#006837]">
+              {eyebrow}
+            </span>
+          )}
+          {title && <h2 className="text-base font-extrabold text-slate-900 sm:text-lg">{title}</h2>}
+          {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+        </div>
+      )}
       {children}
     </section>
   );
@@ -44,7 +78,7 @@ export function Card({
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="flex flex-col gap-1.5 text-[13px] font-bold uppercase tracking-[0.06em] text-ink-muted">
+    <label className="flex flex-col gap-1.5 text-xs font-extrabold text-slate-700">
       {label}
       {children}
     </label>
@@ -60,14 +94,14 @@ export function Notice({
 }) {
   const tone =
     kind === "error"
-      ? "border-[#b3261e] bg-[#fdecea] text-[#7a1712]"
+      ? "border-red-300 bg-red-50 text-red-900"
       : kind === "success"
-        ? "border-[#0b7a3e] bg-[#e7f5ec] text-[#0a4d28]"
-        : "border-forest-900/30 bg-mist-bg text-forest-900";
+        ? "border-emerald-300 bg-emerald-50 text-emerald-950"
+        : "border-slate-200 bg-white text-slate-800 shadow-2xs";
   return (
     <p
       role={kind === "error" ? "alert" : "status"}
-      className={`rounded border-l-4 px-4 py-3 text-[15px] font-semibold ${tone}`}
+      className={`rounded-2xl border px-4 py-3.5 text-xs sm:text-sm font-semibold ${tone}`}
     >
       {children}
     </p>
@@ -77,41 +111,44 @@ export function Notice({
 export function Table({ head, children }: { head: string[]; children: ReactNode }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] border-collapse text-left text-[14px]">
+      <table className="w-full min-w-[560px] border-collapse text-left text-xs">
         <thead>
-          <tr className="border-b-2 border-forest-900/20 text-[12px] uppercase tracking-[0.08em] text-ink-muted">
+          <tr className="border-b border-slate-200 bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
             {head.map((h) => (
-              <th key={h} scope="col" className="px-3 py-2 font-bold">
+              <th key={h} scope="col" className="px-3.5 py-3 font-extrabold">
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-forest-900/10">{children}</tbody>
+        <tbody className="divide-y divide-slate-100">{children}</tbody>
       </table>
     </div>
   );
 }
 
 export function Td({ children, className = "" }: { children?: ReactNode; className?: string }) {
-  return <td className={`px-3 py-2.5 align-top ${className}`}>{children}</td>;
+  return <td className={`px-3.5 py-3 align-top ${className}`}>{children}</td>;
 }
 
 export function Badge({
   tone,
   children,
 }: {
-  tone: "green" | "gold" | "red" | "gray";
+  tone: "green" | "gold" | "red" | "gray" | "blue";
   children: ReactNode;
 }) {
   const map = {
-    green: "bg-[#e7f5ec] text-[#0a4d28]",
-    gold: "bg-[#fff3c4] text-[#6b5200]",
-    red: "bg-[#fdecea] text-[#7a1712]",
-    gray: "bg-forest-900/10 text-forest-900",
+    green: "border-emerald-200 bg-emerald-100 text-emerald-900",
+    gold: "border-amber-300 bg-amber-100 text-amber-900",
+    red: "border-red-200 bg-red-100 text-red-900",
+    gray: "border-slate-200 bg-slate-100 text-slate-700",
+    blue: "border-blue-200 bg-blue-100 text-blue-900",
   } as const;
   return (
-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[12px] font-bold ${map[tone]}`}>
+    <span
+      className={`inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${map[tone]}`}
+    >
       {children}
     </span>
   );
@@ -120,9 +157,11 @@ export function Badge({
 export function Pager({ meta, onPage }: { meta?: PageMeta; onPage: (page: number) => void }) {
   if (!meta || meta.last_page <= 1) return null;
   return (
-    <div className="mt-4 flex items-center justify-between gap-3 text-[14px]">
-      <span className="text-ink-muted">
-        Halaman {meta.page} dari {meta.last_page} · {meta.total} data
+    <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs font-semibold">
+      <span className="text-slate-500">
+        Halaman <strong className="text-slate-900">{meta.page}</strong> dari{" "}
+        <strong className="text-slate-900">{meta.last_page}</strong> ·{" "}
+        <strong className="text-[#006837]">{meta.total}</strong> data
       </span>
       <span className="flex gap-2">
         <button
